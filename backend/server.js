@@ -50,6 +50,60 @@ app.post('/login', async (req, res) => {
     );
 });
 
+app.get('/users', (req, res) => {
+    db.query(
+        'SELECT * FROM users',
+        (err, results) => {
+            if (err) return res.status(500).json(err);
+            res.json(results);
+        }
+    );
+});
+
+app.get('/users/:username', (req, res) => {
+    const { username } = req.params;
+
+    db.query(
+        'SELECT * FROM users WHERE username = ?',
+        [username],
+        (err, results) => {
+            if (err) return res.status(500).json(err);
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            res.json(results[0]);
+        }
+    );
+});
+
+app.delete('/users', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    db.query(
+        'SELECT * FROM users WHERE username = ? AND password = ?',
+        [username, password],
+        (err, results) => {
+            if (err) return res.status(500).json(err);
+            if (results.length === 0) {
+                return res.status(401).json({ message: 'Invalid username or password' });
+            }
+
+            db.query(
+                'DELETE FROM users WHERE username = ? AND password = ?',
+                [username, password],
+                (err, result) => {
+                    if (err) return res.status(500).json(err);
+                    res.json({ message: 'User deleted successfully' });
+                }
+            );
+        }
+    );
+});
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
 });
