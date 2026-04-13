@@ -133,11 +133,47 @@ function Dashboard(){
     }
   };
   return (
+    <div>
+    <div style={{ marginBottom: "20px"}}>
+          <Container >
+            <nav class="navbar navbar-expand-lg fixed-top bg-body-tertiary" data-bs-theme="dark">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="/">Intelligent Business Analyzer</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                  <ul class="navbar-nav">
+                    <li class="nav-item">
+                      <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    </ul>
+                  <div class="collapse navbar-collapse" id="navbarNav">
+                  <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <img src="pictures/default.png" alt="Profile" class="rounded-circle" width="30" height="30" style={{backgroundColor: "#212529"}} />
+                      </a>
+                      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                        <li><a class="dropdown-item" href="#">Another action</a></li>
+                        <li><hr class="dropdown-divider"/></li>
+                        <li><a class="dropdown-item" href="/">Log Out</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                  </div>
+                </div>
+              </div>
+            </nav>
+          </Container>
+        </div>
     <Box
       sx={{
         minHeight: '100vh',
         backgroundColor: '#f4f6f8',
-        py: 6
+        py: 6,
+        paddingTop: '80px' // to account for fixed navbar
       }}
     >
       <Container maxWidth="md">
@@ -243,6 +279,7 @@ function Dashboard(){
         </Paper>
       </Container>
     </Box>
+    </div>
   );
 }
 
