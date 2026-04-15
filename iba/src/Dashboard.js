@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import {
   Box,
@@ -9,7 +10,12 @@ import {
   Stack,
   Chip,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -56,10 +62,25 @@ async function getResponse(input, businessRules) {
 }
 
 function Dashboard(){
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [businessRules, setBusinessRules] = useState(null);
   const [result, setResult] = useState('');
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setLogoutOpen(false);
+    navigate("/");
+  };
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const handleFileChange = (event) => {
     const f = event.target.files[0] || null;
@@ -136,29 +157,29 @@ function Dashboard(){
     <div>
     <div style={{ marginBottom: "20px"}}>
           <Container >
-            <nav class="navbar navbar-expand-lg fixed-top bg-body-tertiary" data-bs-theme="dark">
-              <div class="container-fluid">
-                <a class="navbar-brand" href="/">Intelligent Business Analyzer</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
+            <nav className="navbar navbar-expand-lg fixed-top bg-body-tertiary" data-bs-theme="dark">
+              <div className="container-fluid">
+                <a className="navbar-brand" href="#" onClick={(e) => { e.preventDefault(); setLogoutOpen(true); }}>Intelligent Business Analyzer</a>
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                  <span className="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                  <ul class="navbar-nav">
-                    <li class="nav-item">
-                      <a class="nav-link" href="/dashboard">Dashboard</a>
+                <div className="collapse navbar-collapse" id="navbarNav">
+                  <ul className="navbar-nav">
+                    <li className="nav-item">
+                      <a className="nav-link" href="/dashboard">Dashboard</a>
                     </li>
                     </ul>
-                  <div class="collapse navbar-collapse" id="navbarNav">
-                  <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                          <img src="pictures/default.png" alt="Profile" class="rounded-circle" width="30" height="30" style={{backgroundColor: "#212529"}} />
+                  <div className="collapse navbar-collapse">
+                  <ul className="navbar-nav ms-auto">
+                    <li className="nav-item dropdown">
+                      <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <img src="pictures/default.png" alt="Profile" className="rounded-circle" width="30" height="30" style={{backgroundColor: "#212529"}} />
                       </a>
-                      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="/profile">Profile</a></li>
-                        <li><a class="dropdown-item" href="#">Another action</a></li>
-                        <li><hr class="dropdown-divider"/></li>
-                        <li><a class="dropdown-item" href="/">Log Out</a></li>
+                      <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a className="dropdown-item" href="/profile">Profile</a></li>
+                        <li><a className="dropdown-item" href="#">Another action</a></li>
+                        <li><hr className="dropdown-divider"/></li>
+                        <li><a className="dropdown-item" href="/" onClick={() => localStorage.removeItem("user")}>Log Out</a></li>
                       </ul>
                     </li>
                   </ul>
@@ -279,6 +300,19 @@ function Dashboard(){
         </Paper>
       </Container>
     </Box>
+
+    <Dialog open={logoutOpen} onClose={() => setLogoutOpen(false)}>
+      <DialogTitle>Log Out</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Are you sure you want to log out?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setLogoutOpen(false)}>Cancel</Button>
+        <Button onClick={handleLogout} variant="contained" sx={{ backgroundColor: '#1a73e8' }}>Yes, Log Out</Button>
+      </DialogActions>
+    </Dialog>
     </div>
   );
 }
