@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import Dashboard from "./Dashboard";
+import DashboardHandler from "./DashboardHandler";
 import Start from "./Start";
 import Signup from "./Signup";
 import Login from "./Login";
@@ -61,7 +61,7 @@ function App() {
           <Route path="/" element={<Start />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardHandler />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>

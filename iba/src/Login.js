@@ -33,6 +33,17 @@ function Login() {
 
             if (data.user) {
                 localStorage.setItem("user", JSON.stringify(data.user));
+                if (data.user.business_data_uploaded) {
+                    try {
+                        const flagsRes = await fetch(`http://localhost:5000/stored_flags/${data.user.id}`,{
+                            method: "GET"
+                        });
+                        const flagsData = await flagsRes.json();
+                        localStorage.setItem("flags", JSON.stringify(flagsData));
+                    } catch (err) {
+                        console.error("Error fetching stored flags:", err);
+                    }
+                }
                 navigate("/dashboard");
             } else {
                 alert(data.message || "Invalid credentials");
