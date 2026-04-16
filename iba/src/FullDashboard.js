@@ -13,12 +13,17 @@ import {
   Grid,
   CircularProgress,
   Dialog,
+  Slide,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions
 } from '@mui/material';
+import { SmartToy, East } from '@mui/icons-material'
 
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 function FullDashboard(){
     const navigate = useNavigate();
@@ -28,6 +33,8 @@ function FullDashboard(){
     const [result, setResult] = useState('');
     const [logoutOpen, setLogoutOpen] = useState(false);
     const [data, setData] = useState([]);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogContent, setDialogContent] = useState({ title: '', content: '' });
     const user = localStorage.getItem("user");
     const parsedUser = JSON.parse(user);
     const flags = JSON.parse(localStorage.getItem("flags")) || {
@@ -36,6 +43,29 @@ function FullDashboard(){
         non_pay: false,
         chargeback: false,
         variance_com_drop: false
+    };
+
+    const handleClickOpen = (clicked) => {
+        setDialogOpen(true);
+        switch (clicked){
+            case 1:
+                setDialogContent({title:"Non-Pay Flag", content:"This flag identifies an account that did not make a payment in the current month."});
+                break;
+            case 2:
+                setDialogContent({title:"Chargeback Flag", content:"This flag identifies a negative commision in the current month which indicates a supplier chargeback."});
+                break;
+            case 3:
+                setDialogContent({title:"Variance Flag", content:"Also known as the commission drop flag. This flag identifies a significant commissions drop between the current month and the previous month. If this is flagged, seek investigation by a professional."});
+                break;
+        }
+    };
+
+    const handleChattingAssistant = () => {
+        navigate("/assistant");
+    }
+
+    const handleClose = () => {
+        setDialogOpen(false);
     };
 
     const handleLogout = () => {
@@ -132,9 +162,9 @@ function FullDashboard(){
                                         </Typography>
                                         
                                         <Stack direction="row" spacing={1}>
-                                            <Chip label={`Non-Pay: ${flags.non_pay ? "Yes" : "No"}`} color={flags.non_pay ? "error" : "success"} />
-                                            <Chip label={`Chargeback: ${flags.chargeback ? "Yes" : "No"}`} color={flags.chargeback ? "error" : "success"} />
-                                            <Chip label={`Variance in Commission Drop: ${flags.variance_com_drop ? "Yes" : "No"}`} color={flags.variance_com_drop ? "error" : "success"} />
+                                            <Chip clickable onClick={() => handleClickOpen(1)} label={`Non-Pay: ${flags.non_pay ? "Yes" : "No"}`} color={flags.non_pay ? "error" : "success"} />
+                                            <Chip clickable onClick={() => handleClickOpen(2)} label={`Chargeback: ${flags.chargeback ? "Yes" : "No"}`} color={flags.chargeback ? "error" : "success"} />
+                                            <Chip clickable onClick={() => handleClickOpen(3)} label={`Variance in Commission Drop: ${flags.variance_com_drop ? "Yes" : "No"}`} color={flags.variance_com_drop ? "error" : "success"} />
                                         </Stack>
                                     </Stack>
                                 </Paper>
@@ -150,7 +180,7 @@ function FullDashboard(){
                                             <Box sx={{ position: "relative", display: "inline-flex" }}>
       
                                             {/* Progress circle */}
-                                            <CircularProgress variant="determinate" value={85} size={80} thickness={5} color={85 > 80 ? "success" : "error"}/>
+                                            <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/>
 
                                             {/* Center label */}
                                             <Box
@@ -170,7 +200,7 @@ function FullDashboard(){
                                                 component="div"
                                                 color="text.secondary"
                                                 >
-                                                {`${Math.round(85)}%`}
+                                                {`${Math.round(flags.fairness[0])}%`}
                                                 </Typography>
                                             </Box>
 
@@ -182,9 +212,45 @@ function FullDashboard(){
                                     </Stack>
                                 </Paper>
                             </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+                                    <Stack spacing={3}>
+                                    <Typography variant="h6" fontWeight={500}>
+                                        <SmartToy /> Chat with IBA Assistant
+                                    </Typography>
+                                        <Divider />
+                                        <Button onClick={handleChattingAssistant} size="small" variant="contained" endIcon={<East />}>
+                                            Get Started
+                                        </Button>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
                     </Grid>
                 </Container>
             </Box>
+            <Dialog
+                open={dialogOpen}
+                slots={{
+                transition: Transition,
+                }}
+                keepMounted
+                onClose={handleClose}
+                aria-describedby="alert-dialog-slide-description"
+                role="alertdialog"
+            >
+                <DialogTitle>{dialogContent.title}</DialogTitle>
+                <Divider/>
+                <DialogContent>
+                <DialogContentText id="alert-dialog-slide-description">
+                    {dialogContent.content}
+                </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                <Button onClick={handleClose} autoFocus>
+                    Got It!
+                </Button>
+                </DialogActions>
+            </Dialog>
     
         </div>
     );

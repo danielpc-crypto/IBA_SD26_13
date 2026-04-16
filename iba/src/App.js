@@ -6,6 +6,7 @@ import Start from "./Start";
 import Signup from "./Signup";
 import Login from "./Login";
 import Profile from "./Profile";
+import GeminiAssistant from "./GeminiAssistant";
 
 const theme = createTheme({
   palette: {
@@ -62,6 +63,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<DashboardHandler />} />
+          <Route path="/assistant" element={<GeminiAssistant />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>

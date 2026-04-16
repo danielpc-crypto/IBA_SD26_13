@@ -1,3 +1,5 @@
+require("dotenv").config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -5,6 +7,9 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
+const key = process.env.GEMINI_API_KEY
+const genAI = new GoogleGenerativeAI(key);
+const AWS = require("aws-sdk");
 
 const db = mysql.createConnection({
     host: "iba-database.cpy6gmwayev0.us-east-2.rds.amazonaws.com",
@@ -12,6 +17,12 @@ const db = mysql.createConnection({
     password: "GaffarIBA123",
     database: "iba"
 });
+
+const bucket = new AWS.S3 {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: "us-east-2"
+}
 
 db.connect((err) => {
     if (err) {
@@ -135,10 +146,10 @@ app.get('/stored_flags/:id', (req, res) => {
 
 app.post('/stored_flags/:user_id', (req, res) => {
     const { user_id } = req.params;
-    const { non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date } = req.body;
+    const { non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness } = req.body;
     db.query(
-        'INSERT INTO stored_flags (user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date],
+        'INSERT INTO stored_flags (user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start, fairness) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness],
         (err, result) => {
             if (err) return res.status(500).json(err);
             if(result.length === 0) {
@@ -147,6 +158,40 @@ app.post('/stored_flags/:user_id', (req, res) => {
             res.json({ message: 'Flags stored successfully' });
         }
     );
+});
+
+app.post('/chat-stream', async (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Transfer-Encoding", "chunked");
+  res.setHeader("Connection", "keep-alive");
+
+  try {
+    const { messages } = req.body;
+
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+    });
+
+    const chat = model.startChat({
+      history: messages.map(m => ({
+        role: m.role,
+        parts: [{ text: m.text }],
+      })),
+    });
+
+    const result = await chat.sendMessageStream(
+      messages[messages.length - 1].text
+    );
+
+    for await (const chunk of result.stream) {
+      res.write(chunk.text());
+    }
+
+    res.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).end("Error");
+  }
 });
 
 app.listen(5000, () => {

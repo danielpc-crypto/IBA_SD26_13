@@ -56,12 +56,22 @@ def detect_anomalies(X_file):
     X_train = X_train.reindex(columns=feature_names, fill_value=0)
 
     model.fit(X_train)
+    train_scores = -model.decision_function(X_train)
+    p5, p95 = np.percentile(train_scores, [5, 95])
+
+    # during inference
+
 
     X = X.reindex(columns=feature_names, fill_value=0)
-    scores = model.decision_function(X)
-    preds = model.predict(X)
+    raw_score = -model.decision_function(X)
+    pred = model.predict(X)
 
-    return scores, preds
+    anomaly_score_normalized = (raw_score - p5) / (p95 - p5)
+    anomaly_score_normalized = max(0, min(1, anomaly_score_normalized))
+
+    fairness = 100 * (1 - anomaly_score_normalized)
+
+    return raw_score, pred, fairness
 
 # if __name__ == "__main__":
    

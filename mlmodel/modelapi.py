@@ -25,8 +25,10 @@ async def upload_data(file: UploadFile = File(...)):
     flags["supplier_name"] = df["Supplier Name"].iloc[0] if "Supplier Name" in df.columns else "Unknown"
     flags["contract_start_date"] = df["Contract Start Date"].iloc[0] if "Contract Start Date" in df.columns else "Unknown"
 
-    anomaly_scores, anomaly_preds = detect_anomalies(df)
+    anomaly_scores, anomaly_preds, fairness = detect_anomalies(df)
     flags["anomaly_score"] = anomaly_scores.tolist()
     flags["anomaly_pred"] = anomaly_preds.tolist()
+    flags["fairness"] = fairness
+
 
     return flags

@@ -19,12 +19,7 @@ import {
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { GoogleGenAI } from "@google/genai";
 import * as XLSX from 'xlsx';
-
-const ai = new GoogleGenAI({
-    apiKey: process.env.REACT_APP_GOOGLE_GENAI_KEY
-});
 
 
 const excelToText = (file) => {
@@ -44,21 +39,6 @@ const excelToText = (file) => {
     reader.readAsArrayBuffer(file);
   });
 };
-
-
-async function getResponse(input, businessRules) {
-  // The SDK accepts plain text parts (strings). Ensure we pass strings only.
-  const parts = [];
-  if (input) parts.push(input);
-  if (businessRules) parts.push(businessRules);
-  parts.push("Use the business rules to detect anomalies in the input and explain them.");
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: parts,
-  });
-  return response;
-}
 
 function UploadDashboard({ onUploadSuccess }) {
   const navigate = useNavigate();
@@ -142,7 +122,7 @@ function UploadDashboard({ onUploadSuccess }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ non_pay: flags.non_pay, chargeback: flags.chargeback, variance_com_drop: flags.variance_commission_drop, anomaly_score: flags.anomaly_score, anomaly_pred: flags.anomaly_pred, supplier_name: flags.supplier_name, contract_start_date: flags.contract_start_date }),
+        body: JSON.stringify({ non_pay: flags.non_pay, chargeback: flags.chargeback, variance_com_drop: flags.variance_commission_drop, anomaly_score: flags.anomaly_score, anomaly_pred: flags.anomaly_pred, supplier_name: flags.supplier_name, contract_start_date: flags.contract_start_date, fairness: flags.fairness }),
       });
       const data = await res.json();
       console.log("Flags stored response:", data);
