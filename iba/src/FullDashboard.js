@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import "./start.css"
 import ReactMarkdown from 'react-markdown';
 import {
   Box,
@@ -8,6 +9,9 @@ import {
   Paper,
   Container,
   Stack,
+  Card,
+  CardContent,
+  CardActionArea,
   Chip,
   Divider,
   Grid,
@@ -131,58 +135,46 @@ function FullDashboard(){
                         <Typography variant="h4" fontWeight={600} gutterBottom>
                         Welcome Back, {parsedUser.firstName}! 
                         </Typography>
-                    </Box>
+                    
                     <Grid container direction="row" spacing={2} sx={{alignItems: "stretch",}}>
-                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                            <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                <Stack spacing={3}>
+                        <Grid>
+                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
+                                <CardContent>
                                     <Typography variant="h6" fontWeight={500}>
-                                    Case Summary
+                                        {flags.supplier_name || "N/A"}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Supplier Name
                                     </Typography> 
-                                    <Divider />
-                                    <Typography variant="body1" color="text.secondary">
-                                        Supplier: {flags.supplier_name || "N/A"}
-                                    </Typography>
-
-                                    <Typography variant="body1" color="text.secondary">
-                                        Contract Start Date: {flags.contract_start || "N/A"}
-                                    </Typography>
-                                </Stack>
-                            </Paper>
+                                </CardContent>
+                            </Card>
                             </Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 8 }}>
-                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                    <Stack spacing={3}>
-                                        <Typography variant="h6" fontWeight={500}>
-                                            Flags Found
-                                        </Typography>
-                                        <Divider />
-                                        <Typography variant="body1" color="text.secondary">
-                                            If your commission data shows a significant drop compared to historical trends, it may indicate potential issues such as non-payment or chargebacks. This could be a red flag for supplier performance or financial stability.
-                                        </Typography>
-                                        
-                                        <Stack direction="row" spacing={1}>
-                                            <Chip clickable onClick={() => handleClickOpen(1)} label={`Non-Pay: ${flags.non_pay ? "Yes" : "No"}`} color={flags.non_pay ? "error" : "success"} />
-                                            <Chip clickable onClick={() => handleClickOpen(2)} label={`Chargeback: ${flags.chargeback ? "Yes" : "No"}`} color={flags.chargeback ? "error" : "success"} />
-                                            <Chip clickable onClick={() => handleClickOpen(3)} label={`Variance in Commission Drop: ${flags.variance_com_drop ? "Yes" : "No"}`} color={flags.variance_com_drop ? "error" : "success"} />
-                                        </Stack>
-                                    </Stack>
-                                </Paper>
+                            <Grid>
+                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
+                                <CardContent>
+                                    <Typography variant="h6" fontWeight={500}>
+                                        {flags.contract_start || "N/A"}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Contract Start Date
+                                    </Typography> 
+                                </CardContent>
+                            </Card>
                             </Grid>
+                        </Grid>
+                        </Box>
+                            <Grid container direction="row" spacing={2} sx={{alignItems: "stretch",}}>
+                            
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
                                     <Stack spacing={3}>
                                         <Typography variant="h6" fontWeight={500}>
                                             Fairness Score
                                         </Typography>
-                                        <Divider />
                                         <Stack direction="row" spacing={2}>
                                             <Box sx={{ position: "relative", display: "inline-flex" }}>
-      
-                                            {/* Progress circle */}
-                                            <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/>
-
-                                            {/* Center label */}
+                                            {/* <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/> */}
+                                            <CircularProgress variant="determinate" value={83.7} size={80} thickness={5} color={83.7 > 80 ? "success" : "error"}/>
                                             <Box
                                                 sx={{
                                                 top: 0,
@@ -200,7 +192,8 @@ function FullDashboard(){
                                                 component="div"
                                                 color="text.secondary"
                                                 >
-                                                {`${Math.round(flags.fairness[0])}%`}
+                                                {/* {`${Math.round(flags.fairness[0])}%`} */}
+                                                {83.7}
                                                 </Typography>
                                             </Box>
 
@@ -208,6 +201,25 @@ function FullDashboard(){
                                             <Typography variant="body1" color="text.secondary">
                                                 Your fairness score is... 
                                             </Typography>
+                                        </Stack>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 8 }}>
+                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+                                    <Stack spacing={3}>
+                                        <Typography variant="h6" fontWeight={500}>
+                                            Flags Found
+                                        </Typography>
+                                        <Divider />
+                                        <Typography variant="body1" color="text.secondary">
+                                            If your commission data shows a significant drop compared to historical trends, it may indicate potential issues such as non-payment or chargebacks. This could be a red flag for supplier performance or financial stability.
+                                        </Typography>
+                                        
+                                        <Stack direction="row" spacing={1}>
+                                            <Chip clickable onClick={() => handleClickOpen(1)} label={`Non-Pay: ${flags.non_pay ? "Yes" : "No"}`} color={flags.non_pay ? "error" : "success"} />
+                                            <Chip clickable onClick={() => handleClickOpen(2)} label={`Chargeback: ${flags.chargeback ? "Yes" : "No"}`} color={flags.chargeback ? "error" : "success"} />
+                                            <Chip clickable onClick={() => handleClickOpen(3)} label={`Variance in Commission Drop: ${flags.variance_com_drop ? "Yes" : "No"}`} color={flags.variance_com_drop ? "error" : "success"} />
                                         </Stack>
                                     </Stack>
                                 </Paper>
@@ -251,7 +263,10 @@ function FullDashboard(){
                 </Button>
                 </DialogActions>
             </Dialog>
-    
+        <footer className="site-footer">
+          <p>&copy; 2026 Intelligent Business Analyzer</p>
+          <p>Please note that this is purely based off of predictive modeling and general business rules. For a better tailored experience, please reach out to a local financial analyst or legal professional.</p>
+        </footer>
         </div>
     );
 }

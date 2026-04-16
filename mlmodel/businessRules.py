@@ -16,6 +16,7 @@ def apply_rules(df):
         #BR-012
         "variance_commission_drop": ((percentVar < -0.1) & (abs(dollarVar) > 50)).any(),
         #BR-013
+        
     }
 
     flags = {k: bool(v) for k, v in flags.items()}

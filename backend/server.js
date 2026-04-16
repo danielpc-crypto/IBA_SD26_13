@@ -3,6 +3,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const multer = require('multer');
+const upload = multer();
 
 const app = express();
 app.use(cors());
@@ -18,11 +20,11 @@ const db = mysql.createConnection({
     database: "iba"
 });
 
-const bucket = new AWS.S3 {
+const bucket = new AWS.S3 ({
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: "us-east-2"
-}
+});
 
 db.connect((err) => {
     if (err) {
@@ -61,9 +63,17 @@ app.post('/login', async (req, res) => {
     );
 });
 
+// app.post("/upload/bucket", async (req, res) => {
+//     try{
+//         const file = req.files.file
+
+//         const fileName = 
+//     }
+// })
+
 app.put('/data_uploaded/:id', (req, res) => {
     const { id } = req.params;
-    
+
     db.query(
         'UPDATE users SET business_data_uploaded = 1 WHERE id = ?',
         [id],
@@ -160,16 +170,25 @@ app.post('/stored_flags/:user_id', (req, res) => {
     );
 });
 
-app.post('/chat-stream', async (req, res) => {
+app.post('/chat-stream', upload.single("file"), async (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
   res.setHeader("Connection", "keep-alive");
 
   try {
-    const { messages } = req.body;
+    const { messages } = JSON.parse(req.body.messages);
+    const file = req.file;
+    const { flags } = req.body.flags;
+
+    const context = [];
+    if (file) context.push(file.buffer.toString());
+    if (flags) context.push(flags);
+    context.push("Use this file with the flags found from the business data when chatting with the user");
+
 
     const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
+        contents: context,
     });
 
     const chat = model.startChat({
@@ -179,9 +198,16 @@ app.post('/chat-stream', async (req, res) => {
       })),
     });
 
-    const result = await chat.sendMessageStream(
-      messages[messages.length - 1].text
-    );
+    const lastMessage = messages[messages.length - 1].text;
+
+    const fullPrompt = `Context: ${context.join("\n")}
+        Use the provided file and flags when answering.
+
+        User:
+        ${lastMessage}
+        `;
+
+    const result = await chat.sendMessageStream(fullPrompt);
 
     for await (const chunk of result.stream) {
       res.write(chunk.text());

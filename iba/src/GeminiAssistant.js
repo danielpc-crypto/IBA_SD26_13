@@ -38,6 +38,7 @@ function GeminiAssistant(){
         chargeback: false,
         variance_com_drop: false
     };
+    const userFile = localStorage.getItem("file");
 
     const handleLogout = () => {
             localStorage.removeItem("user");
@@ -71,10 +72,12 @@ function GeminiAssistant(){
         const assistantMsg = { role: "model", text: "" };
         setMessages([...updated, assistantMsg]);
 
-        const gemInput = JSON.stringify({messages: updated});
+        const gemInput = new FormData();
+        gemInput.append("messages", JSON.stringify({messages: updated}))
+        gemInput.append("file", userFile);
+        gemInput.append("flags", flags);
         const res = await fetch("http://localhost:5000/chat-stream", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: gemInput,
         });
 

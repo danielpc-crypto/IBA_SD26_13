@@ -20,6 +20,7 @@ import {
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionIcon from '@mui/icons-material/Description';
 import * as XLSX from 'xlsx';
+import { LocalFireDepartmentSharp } from '@mui/icons-material';
 
 
 const excelToText = (file) => {
@@ -92,6 +93,7 @@ function UploadDashboard({ onUploadSuccess }) {
     const userInfo = JSON.parse(user);
     const formData = new FormData();
     formData.append("file", file);
+    localStorage.setItem("file", file);
 
     /**
      * 
@@ -278,24 +280,6 @@ function UploadDashboard({ onUploadSuccess }) {
               )}
             </Stack>
 
-            {/* Business Rules */}
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Button
-                variant="outlined"
-                component="label"
-              >
-                Upload Business Rules (Optional)
-                <input hidden type="file" onChange={handleBusinessRulesChange} />
-              </Button>
-
-              {businessRules && (
-                <Chip
-                  icon={<DescriptionIcon />}
-                  label={businessRules.name}
-                  variant="outlined"
-                />
-              )}
-            </Stack>
 
             {/* Upload Button */}
             <Box sx={{ pt: 2 }}>
@@ -311,33 +295,6 @@ function UploadDashboard({ onUploadSuccess }) {
           </Stack>
         </Paper>
 
-        {/* Results Section */}
-        <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
-          <Typography variant="h6" fontWeight={500} gutterBottom>
-            Analysis Results
-          </Typography>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {!result ? (
-            <Typography color="text.secondary">
-              No results yet. Upload a file and click Analyze.
-            </Typography>
-          ) : (
-            <Box
-              sx={{
-                backgroundColor: '#fafafa',
-                p: 3,
-                borderRadius: 2,
-                maxHeight: 400,
-                overflowY: 'auto'
-              }}
-            >
-              <ReactMarkdown>{result}</ReactMarkdown>
-              <ReactMarkdown>{JSON.stringify(data, null, 2)}</ReactMarkdown>
-            </Box>
-          )}
-        </Paper>
       </Container>
     </Box>
 
