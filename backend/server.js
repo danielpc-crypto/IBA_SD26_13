@@ -50,6 +50,19 @@ app.post('/login', async (req, res) => {
     );
 });
 
+app.put('/data_uploaded/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.query(
+        'UPDATE users SET business_data_uploaded = 1 WHERE id = ?',
+        [id],
+        (err, result) => {
+            if (err) return res.status(500).json(err);
+            res.json({ message: 'Data uploaded successfully' });
+        }
+    );
+});
+
 app.get('/users', (req, res) => {
     db.query(
         'SELECT * FROM users',
@@ -100,6 +113,38 @@ app.delete('/users', (req, res) => {
                     res.json({ message: 'User deleted successfully' });
                 }
             );
+        }
+    );
+});
+
+app.get('/stored_flags/:id', (req, res) => {
+    const { id } = req.params;
+
+    db.query(
+        'SELECT * FROM stored_flags WHERE user_id = ?',
+        [id],
+        (err, results) => {
+            if (err) return res.status(500).json(err);
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'Flags not found' });
+            }
+            res.json(results[0]);
+        }
+    );
+});
+
+app.post('/stored_flags/:user_id', (req, res) => {
+    const { user_id } = req.params;
+    const { non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date } = req.body;
+    db.query(
+        'INSERT INTO stored_flags (user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date],
+        (err, result) => {
+            if (err) return res.status(500).json(err);
+            if(result.length === 0) {
+                return res.status(404).json({ message: 'Flags not stored' });
+            }
+            res.json({ message: 'Flags stored successfully' });
         }
     );
 });
