@@ -15,11 +15,8 @@ import {
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DescriptionIcon from '@mui/icons-material/Description';
 import * as XLSX from 'xlsx';
-
-const ai = new GoogleGenAI({
-  //INSERT KEY HERE
-    apiKey: process.env.REACT_APP_GOOGLE_GENAI_KEY
-});
+import { LocalFireDepartmentSharp } from '@mui/icons-material';
+import Header from './Header';
 
 
 const excelToText = (file) => {
@@ -47,6 +44,10 @@ function UploadDashboard({ onUploadSuccess }) {
   const [businessRules, setBusinessRules] = useState(null);
   const [result, setResult] = useState('');
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [data, setData] = useState([]);
+  const [s3Url, setS3Url] = useState("");
+  const user = localStorage.getItem("user");
+  // const [flags, setFlags] = useState({});
 
   const handleLogout = () => {
     localStorage.removeItem("user");
