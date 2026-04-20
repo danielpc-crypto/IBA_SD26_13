@@ -18,16 +18,45 @@ import {
   DialogActions
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import Header from './Header';
 
 function Profile() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
 
     const handleLogout = () => {
       localStorage.removeItem("user");
       setLogoutOpen(false);
       navigate("/");
+    };
+
+    const handleDeleteUser = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/users', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: user.username,
+            password: deletePassword
+          })
+        });
+
+        if (response.ok) {
+          localStorage.removeItem("user");
+          setDeleteOpen(false);
+          navigate("/");
+        } else {
+          alert('Failed to delete account. Please check your password.');
+        }
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        alert('An error occurred while deleting your account.');
+      }
     };
 
     useEffect(() => {
@@ -41,40 +70,7 @@ function Profile() {
 
     return (
         <div>
-            <div style={{ marginBottom: "20px"}}>
-                <Container>
-                    <nav className="navbar navbar-expand-lg fixed-top bg-body-tertiary" data-bs-theme="dark">
-                        <div className="container-fluid">
-                            <a className="navbar-brand" href="#" onClick={(e) => { e.preventDefault(); setLogoutOpen(true); }}>Intelligent Business Analyzer</a>
-                            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                                <span className="navbar-toggler-icon"></span>
-                            </button>
-                            <div className="collapse navbar-collapse" id="navbarNav">
-                                <ul className="navbar-nav">
-                                    <li className="nav-item">
-                                        <a className="nav-link" href="/dashboard">Dashboard</a>
-                                    </li>
-                                </ul>
-                                <div className="collapse navbar-collapse">
-                                    <ul className="navbar-nav ms-auto">
-                                        <li className="nav-item dropdown">
-                                            <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <img src="pictures/default.png" alt="Profile" className="rounded-circle" width="30" height="30" style={{backgroundColor: "#212529"}} />
-                                            </a>
-                                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                                <li><a className="dropdown-item" href="/profile">Profile</a></li>
-                                                <li><a className="dropdown-item" href="#">Another action</a></li>
-                                                <li><hr className="dropdown-divider"/></li>
-                                                <li><a className="dropdown-item" href="/" onClick={() => localStorage.removeItem("user")}>Log Out</a></li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
-                </Container>
-            </div>
+            <Header></Header>
             <Box
                 sx={{
                     minHeight: '100vh',
@@ -137,19 +133,43 @@ function Profile() {
                             </Typography>
                         )}
                     </Paper>
+
+                    <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => setDeleteOpen(true)}
+                        >
+                            Delete Account
+                        </Button>
+                    </Box>
                 </Container>
             </Box>
 
-            <Dialog open={logoutOpen} onClose={() => setLogoutOpen(false)}>
-              <DialogTitle>Log Out</DialogTitle>
+            <Dialog open={deleteOpen} onClose={() => { setDeleteOpen(false); setDeletePassword(''); }}>
+              <DialogTitle>Delete Account</DialogTitle>
               <DialogContent>
                 <DialogContentText>
-                  Are you sure you want to log out?
+                  Are you sure you want to delete your account? This action cannot be undone. Please enter your password to confirm.
                 </DialogContentText>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    marginTop: '15px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setLogoutOpen(false)}>Cancel</Button>
-                <Button onClick={handleLogout} variant="contained" sx={{ backgroundColor: '#1a73e8' }}>Yes, Log Out</Button>
+                <Button onClick={() => { setDeleteOpen(false); setDeletePassword(''); }}>Cancel</Button>
+                <Button onClick={handleDeleteUser} variant="contained" color="error">Delete Account</Button>
               </DialogActions>
             </Dialog>
         </div>
