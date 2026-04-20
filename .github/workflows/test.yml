@@ -24,4 +24,5 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test -- --watchAll=false --ci
+        run: npx jest --config=jest.config.js --watchAll=false --ci
+        working-directory: iba
