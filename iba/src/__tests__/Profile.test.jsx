@@ -107,7 +107,9 @@ describe('Delete account dialog', () => {
     renderWithUser(mockUser);
     await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
-    expect(screen.queryByText(/this action cannot be undone/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+        expect(screen.queryByText(/this action cannot be undone/i)).not.toBeInTheDocument();
+    });
   });
 
   test('password input accepts typed value', async () => {
