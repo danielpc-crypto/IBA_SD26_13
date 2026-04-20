@@ -20,7 +20,7 @@ const db = mysql.createConnection({
     database: "iba"
 });
 
-const bucket = new AWS.S3 ({
+const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: "us-east-2"
@@ -63,20 +63,37 @@ app.post('/login', async (req, res) => {
     );
 });
 
-// app.post("/upload/bucket", async (req, res) => {
-//     try{
-//         const file = req.files.file
+app.post("/upload/bucket", upload.single("file"), async (req, res) => {
+    try{
+        const file = req.file;
+        const username = req.body.username;
 
-//         const fileName = 
-//     }
-// })
+        const key = `${username}/${Date.now()}_${file.originalname}`;
+        
+        bucket = "iba-13-bucket";
+        const result = await s3.upload({
+            Bucket: bucket,
+            Key: key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            ACL: "public-read"
+        }).promise();
+    
+
+        res.json({ file_url: result.Location });
+    }catch(err){
+        console.error("S3 upload error:", err);
+        res.status(500).json({ message: 'Error uploading file' });
+    }
+})
 
 app.put('/data_uploaded/:id', (req, res) => {
     const { id } = req.params;
+    const { s3_url } = req.body;
 
     db.query(
-        'UPDATE users SET business_data_uploaded = 1 WHERE id = ?',
-        [id],
+        'UPDATE users SET business_data_uploaded = 1, s3_url = ? WHERE id = ?',
+        [s3_url, id],
         (err, result) => {
             if (err) return res.status(500).json(err);
             res.json({ message: 'Data uploaded successfully' });
@@ -220,6 +237,14 @@ app.post('/chat-stream', upload.single("file"), async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-    console.log('Server is running on port 5000');
+app.get("/health", (req, res) => {
+    res.json({ ok: true });
 });
+
+module.exports = app;
+
+if (require.main === module) {
+    app.listen(5000, () => {
+        console.log("Server is running on port 5000");
+    });
+}

@@ -32,19 +32,15 @@ def preprocess_data(df):
             except:
                 pass  # not a date column
 
-    for col in df.columns:
-        if df[col].dtype == "object":
-            df[col] = (
-                df[col]
-                .str.replace(",", "", regex=False)
-                .str.replace("$", "", regex=False)
-            )
-            df[col] = pd.to_numeric(df[col], errors="ignore")
+    # for col in df.columns:
+    #     if df[col].dtype == "object":
+    #         df[col] = (df[col].str.replace(",", "", regex=False).str.replace("$", "", regex=False))
+    #         df[col] = pd.to_numeric(df[col], errors="ignore")
 
     return df
 
 def detect_anomalies(X_file):
-    train_data_loc = "sampleData/train_data.csv"
+    train_data_loc = "sampleData/updated_train_data.csv"
     X_train = pd.read_csv(train_data_loc)
     X_train = preprocess_data(X_train)
     X_train = pd.get_dummies(X_train)  # Convert categorical variables to dummy variables
@@ -80,7 +76,8 @@ def detect_anomalies(X_file):
 #     # Load training and test data
 
 
-#     anomaly_score, anomaly_preds = detect_anomalies(X_train, X_test)
+#     anomaly_score, anomaly_preds, fairness = detect_anomalies(test_data_loc)
 
 #     print("Anomaly Scores:", anomaly_score)
 #     print("Predictions:", anomaly_preds)
+#     print("Fairness Score:", fairness)

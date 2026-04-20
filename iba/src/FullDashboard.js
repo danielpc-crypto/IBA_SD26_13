@@ -173,8 +173,8 @@ function FullDashboard(){
                                         </Typography>
                                         <Stack direction="row" spacing={2}>
                                             <Box sx={{ position: "relative", display: "inline-flex" }}>
-                                            {/* <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/> */}
-                                            <CircularProgress variant="determinate" value={83.7} size={80} thickness={5} color={83.7 > 80 ? "success" : "error"}/>
+                                            <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/>
+                                            {/* <CircularProgress variant="determinate" value={83.7} size={80} thickness={5} color={83.7 > 80 ? "success" : "error"}/> */}
                                             <Box
                                                 sx={{
                                                 top: 0,
@@ -192,8 +192,8 @@ function FullDashboard(){
                                                 component="div"
                                                 color="text.secondary"
                                                 >
-                                                {/* {`${Math.round(flags.fairness[0])}%`} */}
-                                                {83.7}
+                                                {`${Math.round(flags.fairness)}%`}
+                                                {/* {83.7} */}
                                                 </Typography>
                                             </Box>
 

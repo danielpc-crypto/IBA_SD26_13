@@ -49,6 +49,7 @@ function UploadDashboard({ onUploadSuccess }) {
   const [result, setResult] = useState('');
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [s3Url, setS3Url] = useState("");
   const user = localStorage.getItem("user");
   // const [flags, setFlags] = useState({});
 
@@ -106,11 +107,48 @@ function UploadDashboard({ onUploadSuccess }) {
         body: formData,
       });
       const resultingFlags = await res.json();
+      if(resultingFlags.error){
+        console.error("Model processing error:", resultingFlags.error);
+        alert("File does not include required columns: " + resultingFlags.error);
+        return;
+      }
       setData(resultingFlags);
       localStorage.setItem("flags", JSON.stringify(resultingFlags));
     } catch (err) {
       console.error("File to model upload error:", err);
     }
+
+    /**
+     * 
+     * STORE DOCUMENT IN S3 BUCKET
+     * 
+     */
+    try {
+      formData.append("username", userInfo.username);
+      const res =await fetch("http://localhost:5000/upload/bucket", {
+        method: "POST",
+        body: formData,
+      });
+      const urlData = await res.json();
+      console.log("File uploaded to S3 at URL:", urlData.file_url);
+      localStorage.setItem("s3_url", urlData.file_url);
+      try{
+        const res = await fetch(`http://localhost:5000/data_uploaded/${userInfo.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ s3_url: urlData.file_url }),
+        });
+        const data = await res.json();
+        console.log(data);
+    } catch (err) {
+      console.error("Error updating user data upload status:", err);
+    }
+    } catch (err) {
+      console.error("Error uploading file to S3:", err);
+    }
+
 
     /**
      * 
@@ -138,15 +176,7 @@ function UploadDashboard({ onUploadSuccess }) {
      * UPDATING USER DATA TO INDICATE DATA HAS BEEN UPLOADED BY USER
      * 
     */
-    try{
-      const res = await fetch(`http://localhost:5000/data_uploaded/${userInfo.id}`, {
-        method: "PUT",
-      });
-      const data = await res.json();
-      console.log(data);
-    } catch (err) {
-      console.error("Error updating user data upload status:", err);
-    }
+    
 
     // const fileContent = await excelToText(file); // CSV/text from Excel
     // const bR = businessRules ? await readFileAsText(businessRules) : null; // business rules as plain text
