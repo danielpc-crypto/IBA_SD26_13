@@ -173,10 +173,10 @@ app.get('/stored_flags/:id', (req, res) => {
 
 app.post('/stored_flags/:user_id', (req, res) => {
     const { user_id } = req.params;
-    const { non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness } = req.body;
+    const { non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness, current_month_commission, last_month_commission, prior_month_2_commission, prior_month_3_commission, prior_month_4_commission, prior_month_5_commission, contract_term_months, account_age_months } = req.body;
     db.query(
-        'INSERT INTO stored_flags (user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start, fairness) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness],
+        'INSERT INTO stored_flags (user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start, fairness, current_month_commission, last_month_commission, prior_month_2_commission, prior_month_3_commission, prior_month_4_commission, prior_month_5_commission, contract_term_months, account_age_months) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, non_pay, chargeback, variance_com_drop, anomaly_score, anomaly_pred, supplier_name, contract_start_date, fairness, current_month_commission, last_month_commission, prior_month_2_commission, prior_month_3_commission, prior_month_4_commission, prior_month_5_commission, contract_term_months, account_age_months],
         (err, result) => {
             if (err) return res.status(500).json(err);
             if(result.length === 0) {

@@ -31,6 +31,13 @@ async def upload_data(file: UploadFile = File(...)):
     flags["anomaly_score"] = anomaly_scores.tolist()
     flags["anomaly_pred"] = anomaly_preds.tolist()
     flags["fairness"] = float(fairness)
-
+    flags["current_month_commission"] = df["Acct Comm - Actual Current Month"].iloc[0].item() if "Acct Comm - Actual Current Month" in df.columns else 0
+    flags["last_month_commission"] = df["Acct Comm - Actual Prior Mnt 1"].iloc[0].item() if "Acct Comm - Actual Prior Mnt 1" in df.columns else 0
+    flags["prior_month_2_commission"] = df["Acct Comm - Actual Prior Mnt 2"].iloc[0].item() if "Acct Comm - Actual Prior Mnt 2" in df.columns else 0
+    flags["prior_month_3_commission"] = df["Acct Comm - Actual Prior Mnt 3"].iloc[0].item() if "Acct Comm - Actual Prior Mnt 3" in df.columns else 0
+    flags["prior_month_4_commission"] = df["Acct Comm - Actual Prior Mnt 4"].iloc[0].item() if "Acct Comm - Actual Prior Mnt 4" in df.columns else 0
+    flags["prior_month_5_commission"] = df["Acct Comm - Actual Prior Mnt 5"].iloc[0].item() if "Acct Comm - Actual Prior Mnt 5" in df.columns else 0
+    flags["contract_term_months"] = df["Term (Mos.)"].iloc[0].item() if "Term (Mos.)" in df.columns else 0
+    flags["account_age_months"] = df["Account Aging"].iloc[0].item() if "Account Aging" in df.columns else 0
 
     return flags

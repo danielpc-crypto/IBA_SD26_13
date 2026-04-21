@@ -23,6 +23,7 @@ import Header from './Header';
 function Profile() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [open, setOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deletePassword, setDeletePassword] = useState('');
@@ -70,12 +71,13 @@ function Profile() {
 
     return (
         <div>
-            <Header></Header>
+            <Header open={open} setOpen={setOpen} />
             <Box
                 sx={{
                     minHeight: '100vh',
                     backgroundColor: '#f4f6f8',
                     py: 6,
+                    width: open ? 'calc(100% - 240px)' : '100%', marginLeft: open ? '240px' : '0px',transition: 'margin 0.3s ease',
                     paddingTop: '80px'
                 }}
             >
