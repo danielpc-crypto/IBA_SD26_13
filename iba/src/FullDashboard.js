@@ -24,6 +24,7 @@ import {
   DialogActions
 } from '@mui/material';
 import { SmartToy, East } from '@mui/icons-material'
+import { LineChart } from '@mui/x-charts/LineChart';
 import Header from './Header';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -38,8 +39,12 @@ function FullDashboard(){
     const [result, setResult] = useState('');
     const [logoutOpen, setLogoutOpen] = useState(false);
     const [data, setData] = useState([]);
+    const [open, setOpen] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogContent, setDialogContent] = useState({ title: '', content: '' });
+    const currMonth = new Date().getMonth();
+    const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const xLabels = [month[(currMonth - 5 + 12) % 12], month[(currMonth - 4 + 12) % 12], month[(currMonth - 3 + 12) % 12], month[(currMonth - 2 + 12) % 12], month[(currMonth - 1 + 12) % 12], month[currMonth]];
     const user = localStorage.getItem("user");
     const parsedUser = JSON.parse(user);
     const flags = JSON.parse(localStorage.getItem("flags")) || {
@@ -88,18 +93,20 @@ function FullDashboard(){
 
     return(
         <div>
-            <Header></Header>
+            <Header open={open} setOpen={setOpen}></Header>
             <Box
                 sx={{
                 minHeight: '100vh',
                 backgroundColor: '#f4f6f8',
                 py: 6,
-                paddingTop: '80px' // to account for fixed navbar
+                paddingTop: '90px', // to account for fixed navbar
+                width: open ? 'calc(100% - 240px)' : '100%', marginLeft: open ? '240px' : '0px',transition: 'margin 0.3s ease',
+                padding: 3,
                 }}
             >
                 <Container maxWidth="lg">
                     {/* Header */}
-                    <Box sx={{ mb: 5 }}>
+                    <Box sx={{ mb: 5, }}>
                         <Typography variant="h4" fontWeight={600} gutterBottom>
                         Welcome Back, {parsedUser.firstName}! 
                         </Typography>
@@ -117,6 +124,8 @@ function FullDashboard(){
                                 </CardContent>
                             </Card>
                             </Grid>
+
+
                             <Grid>
                             <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
                                 <CardContent>
@@ -129,10 +138,52 @@ function FullDashboard(){
                                 </CardContent>
                             </Card>
                             </Grid>
+                            <Grid>
+                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
+                                <CardContent>
+                                    <Typography variant="h6" fontWeight={500}>
+                                        {flags.contract_term_months || "N/A"}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Contract Term (Months)
+                                    </Typography> 
+                                </CardContent>
+                            </Card>
+                            </Grid>
                         </Grid>
                         </Box>
                             <Grid container direction="row" spacing={2} sx={{alignItems: "stretch",}}>
-                            
+                                <Grid >
+                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+                                    <Stack spacing={3}>
+                                    <Typography variant="h6" fontWeight={500}>
+                                        Payments
+                                    </Typography>
+                                        <Divider />
+                                        <LineChart
+                                            xAxis={[{data: xLabels, scaleType: 'point'}]}
+                                            series={[
+                                                {
+                                                    data: [flags.prior_month_5_commission, flags.prior_month_4_commission, flags.prior_month_3_commission, flags.prior_month_2_commission, flags.last_month_commission, flags.current_month_commission],
+                                                    showMark: false,
+                                                    color: "#1976d2",
+
+                                                },
+                                            ]}
+                                            height={200}
+                                            width={500}
+                                            slotProps={{
+                                                line: {
+                                                style: {
+                                                    filter: "drop-shadow(0px 0px 6px rgba(25,118,210,0.6))",
+                                                },
+                                                },
+                                            }}>
+
+                                        </LineChart>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
                                     <Stack spacing={3}>
@@ -166,9 +217,6 @@ function FullDashboard(){
                                             </Box>
 
                                             </Box>
-                                            <Typography variant="body1" color="text.secondary">
-                                                Your fairness score is... 
-                                            </Typography>
                                         </Stack>
                                     </Stack>
                                 </Paper>
@@ -205,6 +253,7 @@ function FullDashboard(){
                                     </Stack>
                                 </Paper>
                             </Grid>
+                            
                     </Grid>
                 </Container>
             </Box>
@@ -235,6 +284,7 @@ function FullDashboard(){
           <p>&copy; 2026 Intelligent Business Analyzer</p>
           <p>Please note that this is purely based off of predictive modeling and general business rules. For a better tailored experience, please reach out to a local financial analyst or legal professional.</p>
         </footer>
+
         </div>
     );
 }

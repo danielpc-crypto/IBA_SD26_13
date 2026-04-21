@@ -158,7 +158,23 @@ function UploadDashboard({ onUploadSuccess }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ non_pay: flags.non_pay, chargeback: flags.chargeback, variance_com_drop: flags.variance_commission_drop, anomaly_score: flags.anomaly_score, anomaly_pred: flags.anomaly_pred, supplier_name: flags.supplier_name, contract_start_date: flags.contract_start_date, fairness: flags.fairness }),
+        body: JSON.stringify({ 
+          non_pay: flags.non_pay, 
+          chargeback: flags.chargeback, 
+          variance_com_drop: flags.variance_commission_drop, 
+          anomaly_score: flags.anomaly_score, 
+          anomaly_pred: flags.anomaly_pred, 
+          supplier_name: flags.supplier_name, 
+          contract_start_date: flags.contract_start_date, 
+          fairness: flags.fairness,
+          current_month_commission: flags.current_month_commission,
+          last_month_commission: flags.last_month_commission,
+          prior_month_2_commission: flags.prior_month_2_commission,
+          prior_month_3_commission: flags.prior_month_3_commission,
+          prior_month_4_commission: flags.prior_month_4_commission,
+          prior_month_5_commission: flags.prior_month_5_commission,
+          contract_term_months: flags.contract_term_months,
+          account_age_months: flags.account_age_months,}),
       });
       const data = await res.json();
       console.log("Flags stored response:", data);
