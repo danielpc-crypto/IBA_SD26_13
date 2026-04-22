@@ -27,6 +27,7 @@ import Header from './Header';
 function GeminiAssistant(){
     const navigate = useNavigate();
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ function GeminiAssistant(){
     const sendMessage = async () => {
         if(!input.trim()) return;
 
-        const userMsg = { role: "user", text: input};
+        const userMsg = { role: "user", text: input };
         const updated = [...messages, userMsg];
 
         setMessages(updated);
@@ -105,21 +106,19 @@ function GeminiAssistant(){
 
     return (
         <div>
-            <Header></Header>
-            <Box sx={{ maxWidth: 800, mx: "auto", p: 2, paddingTop: '80px' }}>
-                <Typography variant="h5" sx={{ mb: 2 }}>
-                    Gemini Chat
-                </Typography>
+            <Header open={open} setOpen={setOpen} />
+            <Box sx={{ maxWidth: 800, mx: "auto", p: 2, paddingTop: '80px'}}>
 
                 {/* Chat container */}
-                <Paper
+                <Container
                     sx={{
                     height: "70vh",
                     p: 2,
                     overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 1,
+                    gap: 1.2,
+                    scrollBehavior: "smooth",
                     }}
                 >
                     {messages.map((msg, i) => (
@@ -132,15 +131,47 @@ function GeminiAssistant(){
                     >
                         <Box
                         sx={{
-                            maxWidth: "70%",
-                            p: 1.5,
-                            borderRadius: 2,
-                            bgcolor: msg.role === "user" ? "#1976d2" : "#eee",
-                            color: msg.role === "user" ? "white" : "black",
+                            maxWidth: "75%",
+                            py: 1.2,
+                            px: 2,
+                            borderRadius: 2.5,
+                            bgcolor: msg.role === "user" ? "#1976d2" : "#f5f5f5",
+                            color: msg.role === "user" ? "#fff" : "#111",
                             whiteSpace: "pre-wrap",
+                            boxShadow: msg.role === "user"
+                                ? "0 1px 2px rgba(0,0,0,0.2)"
+                                : "0 1px 3px rgba(0,0,0,0.08)",
+
+                            whiteSpace: "normal",
+                            "& p": {
+                                margin: 0,
+                                marginBottom: "0.6em",
+                            },
+
+                            "& p:last-child": {
+                                marginBottom: 0,
+                            },
+
+                            "& pre": {
+                                margin: "8px 0",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                overflowX: "auto",
+                                backgroundColor: msg.role === "user" ? "#1565c0" : "#eee",
+                            },
+
+                            "& code": {
+                                fontFamily: "monospace",
+                                fontSize: "0.9em",
+                            },
+    
                         }}
                         >
-                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        <ReactMarkdown
+                        components={{
+                            p: ({ children }) => <p style={{ margin: 0 }}>{children}</p>,
+                        }}>
+                            {msg.text}</ReactMarkdown>
                         </Box>
                     </Box>
                     ))}
@@ -148,12 +179,12 @@ function GeminiAssistant(){
                     {loading && messages[messages.length - 1]?.text === "" && (
                     <Stack direction="row" spacing={1} alignItems="center">
                         <CircularProgress size={14} />
-                        <Typography variant="caption">Gemini is typing...</Typography>
+                        <Typography variant="caption">Assistant is typing...</Typography>
                     </Stack>
                     )}
 
                     <div ref={bottomRef} />
-                </Paper>
+                </Container>
 
                 {/* Input box */}
                 <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
@@ -163,6 +194,14 @@ function GeminiAssistant(){
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Message..."
                     onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                     sx={{
+                        "& .MuiOutlinedInput-root": {
+                            boxShadow: "0 0 10px rgba(25,118,210,0.4)",
+                            "& fieldset": {
+                            borderColor: "rgba(25,118,210,0.6)",
+                            },
+                        },
+                        }}
                     />
 
                     <IconButton onClick={sendMessage} color="primary">
