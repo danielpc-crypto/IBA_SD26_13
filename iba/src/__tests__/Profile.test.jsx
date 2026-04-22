@@ -61,7 +61,7 @@ describe('Profile rendering', () => {
     expect(screen.getByText('John')).toBeInTheDocument();
     expect(screen.getByText('Doe')).toBeInTheDocument();
     expect(screen.getByText('johndoe')).toBeInTheDocument();
-    expect(screen.getByText('jane@testmail.com')).toBeInTheDocument();
+    expect(screen.getByText('johndoe@testmail.com')).toBeInTheDocument();
   });
 
   test('shows fallback message when no user in localStorage', () => {
@@ -145,7 +145,7 @@ describe('Delete account API behaviour', () => {
       expect(fetch).toHaveBeenCalledWith('http://localhost:5000/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'janedoe', password: 'mysecret' }),
+        body: JSON.stringify({ username: 'johndoe', password: 'mysecret' }),
       });
     });
   });
