@@ -35,7 +35,7 @@ function Header({open, setOpen}){
 
     return (
         <div>
-            <div style={{ marginBottom: "60px"}}>
+            <div style={{ marginBottom: "10px"}}>
                 <Container>
                     <nav className="navbar navbar-expand-lg fixed-top bg-body-tertiary" style={{width: open ? 'calc(100% - 240px)' : '100%', marginLeft: open ? '240px' : '0px', transition: 'margin 0.3s ease',}} data-bs-theme="dark">
                         <div className="container-fluid">

@@ -12,6 +12,7 @@ import {
   Card,
   CardContent,
   CardActionArea,
+  Popover,
   Chip,
   Divider,
   Grid,
@@ -19,8 +20,8 @@ import {
   Dialog,
   Slide,
   DialogTitle,
-  DialogContent,
-  DialogContentText,
+  popoverContent,
+  popoverContentText,
   DialogActions
 } from '@mui/material';
 import { SmartToy, East } from '@mui/icons-material'
@@ -31,6 +32,48 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+
+const QuickFactsCard = ({ title, value, color }) => (
+<Card
+    elevation={0}
+    sx={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 3,
+        p: 3,
+        bgcolor: "white",
+        background: `linear-gradient(to right, ${color}12, #ffffff)`,
+        transition: "0.2s ease",
+        "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+        },
+
+    }}
+>
+    <Typography variant="caption" color="text.secondary">
+    {title}
+    </Typography>
+    <Typography variant="h6" fontWeight={600}>
+    {value || "N/A"}
+    </Typography>
+</Card>
+);
+
+
+
+const Flag = ({ label, value }) => (
+    <Chip
+        label={`${label}: ${value ? "Yes" : "No"}`}
+        color={value ? "error" : "success"}
+        variant="outlined"
+        clickable
+        sx={{
+        fontWeight: 500,
+        borderRadius: 2,
+        }}
+    />
+    );
+
 function FullDashboard(){
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -40,8 +83,8 @@ function FullDashboard(){
     const [logoutOpen, setLogoutOpen] = useState(false);
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [dialogContent, setDialogContent] = useState({ title: '', content: '' });
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [popoverContent, setPopoverContent] = useState({ content: '' });
     const currMonth = new Date().getMonth();
     const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const xLabels = [month[(currMonth - 5 + 12) % 12], month[(currMonth - 4 + 12) % 12], month[(currMonth - 3 + 12) % 12], month[(currMonth - 2 + 12) % 12], month[(currMonth - 1 + 12) % 12], month[currMonth]];
@@ -56,16 +99,16 @@ function FullDashboard(){
     };
 
     const handleClickOpen = (clicked) => {
-        setDialogOpen(true);
+        setPopoverOpen(true);
         switch (clicked){
             case 1:
-                setDialogContent({title:"Non-Pay Flag", content:"This flag identifies an account that did not make a payment in the current month."});
+                setPopoverContent({title:"Non-Pay Flag", content:"This flag identifies an account that did not make a payment in the current month."});
                 break;
             case 2:
-                setDialogContent({title:"Chargeback Flag", content:"This flag identifies a negative commision in the current month which indicates a supplier chargeback."});
+                setPopoverContent({title:"Chargeback Flag", content:"This flag identifies a negative commision in the current month which indicates a supplier chargeback."});
                 break;
             case 3:
-                setDialogContent({title:"Variance Flag", content:"Also known as the commission drop flag. This flag identifies a significant commissions drop between the current month and the previous month. If this is flagged, seek investigation by a professional."});
+                setPopoverContent({title:"Variance Flag", content:"Also known as the commission drop flag. This flag identifies a significant commissions drop between the current month and the previous month. If this is flagged, seek investigation by a professional."});
                 break;
         }
     };
@@ -75,7 +118,7 @@ function FullDashboard(){
     }
 
     const handleClose = () => {
-        setDialogOpen(false);
+        setPopoverOpen(false);
     };
 
     const handleLogout = () => {
@@ -95,191 +138,203 @@ function FullDashboard(){
         <div>
             <Header open={open} setOpen={setOpen}></Header>
             <Box
-                sx={{
-                minHeight: '100vh',
-                backgroundColor: '#f4f6f8',
-                py: 6,
-                paddingTop: '90px', // to account for fixed navbar
-                width: open ? 'calc(100% - 240px)' : '100%', marginLeft: open ? '240px' : '0px',transition: 'margin 0.3s ease',
-                padding: 3,
-                }}
+            sx={{
+                minHeight: "100vh",
+                bgcolor: "#f7f8fa",
+                pt: 10,
+                pl: open ? "260px" : 0,
+                transition: "all 0.3s ease",
+            }}
             >
-                <Container maxWidth="lg">
-                    {/* Header */}
-                    <Box sx={{ mb: 5, }}>
-                        <Typography variant="h4" fontWeight={600} gutterBottom>
-                        Welcome Back, {parsedUser.firstName}! 
+            <Container maxWidth="lg">
+                
+                {/* ================= HEADING ================= */}
+                <Grid container spacing={4} alignItems="stretch" sx={{ mb: 6 }}>
+                    <Grid item xs={12} lg={8}>
+                        <Box sx={{ mb: 6 }}>
+                        <Typography
+                            variant="h4"
+                            fontWeight={700}
+                            sx={{ letterSpacing: "-0.03em" }}
+                        >
+                            Welcome back, {parsedUser.firstName}
                         </Typography>
-                    
-                    <Grid container direction="row" spacing={2} sx={{alignItems: "stretch",}}>
-                        <Grid>
-                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
-                                <CardContent>
-                                    <Typography variant="h6" fontWeight={500}>
-                                        {flags.supplier_name || "N/A"}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Supplier Name
-                                    </Typography> 
-                                </CardContent>
-                            </Card>
-                            </Grid>
 
-
-                            <Grid>
-                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
-                                <CardContent>
-                                    <Typography variant="h6" fontWeight={500}>
-                                        {flags.contract_start || "N/A"}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Contract Start Date
-                                    </Typography> 
-                                </CardContent>
-                            </Card>
-                            </Grid>
-                            <Grid>
-                            <Card sx={{ display: "inline-flex", background: 'linear-gradient(to right, #006dcc, #ffffff)', flexDirection: 'row' }}>
-                                <CardContent>
-                                    <Typography variant="h6" fontWeight={500}>
-                                        {flags.contract_term_months || "N/A"}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Contract Term (Months)
-                                    </Typography> 
-                                </CardContent>
-                            </Card>
-                            </Grid>
-                        </Grid>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            Supplier analytics overview and performance monitoring
+                        </Typography>
                         </Box>
-                            <Grid container direction="row" spacing={2} sx={{alignItems: "stretch",}}>
-                                <Grid >
-                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                    <Stack spacing={3}>
-                                    <Typography variant="h6" fontWeight={500}>
-                                        Payments
-                                    </Typography>
-                                        <Divider />
-                                        <LineChart
-                                            xAxis={[{data: xLabels, scaleType: 'point'}]}
-                                            series={[
-                                                {
-                                                    data: [flags.prior_month_5_commission, flags.prior_month_4_commission, flags.prior_month_3_commission, flags.prior_month_2_commission, flags.last_month_commission, flags.current_month_commission],
-                                                    showMark: false,
-                                                    color: "#1976d2",
+                        </Grid>
+                {/* ================= QUICK FACTS SECTION ================= */}
+                    
 
-                                                },
-                                            ]}
-                                            height={200}
-                                            width={500}
-                                            slotProps={{
-                                                line: {
-                                                style: {
-                                                    filter: "drop-shadow(0px 0px 6px rgba(25,118,210,0.6))",
-                                                },
-                                                },
-                                            }}>
-
-                                        </LineChart>
-                                    </Stack>
-                                </Paper>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                    <Stack spacing={3}>
-                                        <Typography variant="h6" fontWeight={500}>
-                                            Fairness Score
-                                        </Typography>
-                                        <Stack direction="row" spacing={2}>
-                                            <Box sx={{ position: "relative", display: "inline-flex" }}>
-                                            <CircularProgress variant="determinate" value={flags.fairness} size={80} thickness={5} color={flags.fairness > 80 ? "success" : "error"}/>
-                                            {/* <CircularProgress variant="determinate" value={83.7} size={80} thickness={5} color={83.7 > 80 ? "success" : "error"}/> */}
-                                            <Box
-                                                sx={{
-                                                top: 0,
-                                                left: 0,
-                                                bottom: 0,
-                                                right: 0,
-                                                position: "absolute",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                }}
-                                            >
-                                                <Typography
-                                                variant="body1"
-                                                component="div"
-                                                color="text.secondary"
-                                                >
-                                                {`${Math.round(flags.fairness)}%`}
-                                                {/* {83.7} */}
-                                                </Typography>
-                                            </Box>
-
-                                            </Box>
-                                        </Stack>
-                                    </Stack>
-                                </Paper>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 8 }}>
-                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                    <Stack spacing={3}>
-                                        <Typography variant="h6" fontWeight={500}>
-                                            Flags Found
-                                        </Typography>
-                                        <Divider />
-                                        <Typography variant="body1" color="text.secondary">
-                                            If your commission data shows a significant drop compared to historical trends, it may indicate potential issues such as non-payment or chargebacks. This could be a red flag for supplier performance or financial stability.
-                                        </Typography>
-                                        
-                                        <Stack direction="row" spacing={1}>
-                                            <Chip clickable onClick={() => handleClickOpen(1)} label={`Non-Pay: ${flags.non_pay ? "Yes" : "No"}`} color={flags.non_pay ? "error" : "success"} />
-                                            <Chip clickable onClick={() => handleClickOpen(2)} label={`Chargeback: ${flags.chargeback ? "Yes" : "No"}`} color={flags.chargeback ? "error" : "success"} />
-                                            <Chip clickable onClick={() => handleClickOpen(3)} label={`Variance in Commission Drop: ${flags.variance_com_drop ? "Yes" : "No"}`} color={flags.variance_com_drop ? "error" : "success"} />
-                                        </Stack>
-                                    </Stack>
-                                </Paper>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-                                    <Stack spacing={3}>
-                                    <Typography variant="h6" fontWeight={500}>
-                                        <SmartToy /> Chat with IBA Assistant
-                                    </Typography>
-                                        <Divider />
-                                        <Button onClick={handleChattingAssistant} size="small" variant="contained" endIcon={<East />}>
-                                            Get Started
-                                        </Button>
-                                    </Stack>
-                                </Paper>
-                            </Grid>
-                            
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={4}>
+                    <QuickFactsCard title="Supplier Name " value={flags.supplier_name} color="#4f46e5" />
                     </Grid>
-                </Container>
+                    <Grid item xs={12} md={4}>
+                    <QuickFactsCard title="Contract Start " value={flags.contract_start} color="#0ea5e9" />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                    <QuickFactsCard title="Term (Months) " value={flags.contract_term_months} color="#10b981" />
+                    </Grid>
+                </Grid>
+                <Grid container spacing={3} alignItems="stretch" sx={{ mt: 1 }}>
+                <Grid item xs={12} lg={4}>
+                        <Paper
+                            elevation={0}
+                            sx={{
+                            p: 4,
+                            borderRadius: 3,
+                            bgcolor: "#fff",
+                            border: "1px solid #eef0f3",
+                            }}
+                        >
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                        Fairness Score
+                        </Typography>
+
+                        <Box sx={{ position: "relative", display: "flex", justifyContent: "center" }}>
+                            <CircularProgress
+                            variant="determinate"
+                            value={flags.fairness}
+                            size={85}
+                            thickness={5}
+                            sx={{ color: "#4f46e5" }}
+                            />
+                            <Box
+                            sx={{
+                                position: "absolute",
+                                inset: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                            >
+                            <Typography fontWeight={700}>
+                                {Math.round(flags.fairness)}%
+                            </Typography>
+                            </Box>
+                        </Box>
+                        </Paper>
+                        </Grid>
+                        <Grid item xs={12} lg={4}>
+                        <Paper
+                        elevation={0}
+                        sx={{
+                        p: 4,
+                        borderRadius: 3,
+                        bgcolor: "#fff",
+                        border: "1px solid #eef0f3",
+                        height: "100%",
+                        }}
+                    >
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                        Risk Flags
+                        </Typography>
+
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                            <Flag label="Non-Pay" onClick={() => handleClickOpen(1)} value={flags.non_pay} />
+                            <Flag label="Chargeback" onClick={() => handleClickOpen(2)} value={flags.chargeback} />
+                            <Flag label="Variance Drop" onClick={() => handleClickOpen(3)} value={flags.variance_com_drop} />
+                        </Stack>
+                    </Paper>
+                        </Grid>
+                        </Grid>
+                </Grid>
+
+                {/* ================= ANALYTICS SECTION ================= */}
+                <Box sx={{ mb: 7 }}>
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                    Payments Trend
+                </Typography>
+
+                <Paper
+                    elevation={0}
+                    sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    bgcolor: "#fff",
+                    border: "1px solid #eef0f3",
+                    }}
+                >
+                    <LineChart
+                    xAxis={[{ data: xLabels, scaleType: "point" }]}
+                    series={[
+                        {
+                        data: [
+                            flags.prior_month_5_commission,
+                            flags.prior_month_4_commission,
+                            flags.prior_month_3_commission,
+                            flags.prior_month_2_commission,
+                            flags.last_month_commission,
+                            flags.current_month_commission,
+                        ],
+                        showMark: false,
+                        color: "#4f46e5",
+                        },
+                    ]}
+                    height={280}
+                    />
+                </Paper>
+                </Box>
+
+                <Box sx={{ mb: 8 }}>
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                    AI Support
+                </Typography>
+
+                <Paper
+                    elevation={0}
+                    sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    bgcolor: "#fff",
+                    border: "1px solid #eef0f3",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    }}
+                >
+                    <Stack spacing={1}>
+                    <Typography fontWeight={600}>
+                        <SmartToy sx={{ mr: 1 }} />
+                        Chat with Assistant
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Ask questions about supplier performance and anomalies
+                    </Typography>
+                    </Stack>
+
+                    <Button
+                    onClick={handleChattingAssistant}
+                    variant="contained"
+                    endIcon={<East />}
+                    sx={{
+                        borderRadius: 2,
+                        background: "#4f46e5",
+                        px: 3,
+                    }}
+                    >
+                    Open Chat
+                    </Button>
+                </Paper>
+                </Box>
+
+            </Container>
             </Box>
-            <Dialog
-                open={dialogOpen}
-                slots={{
-                transition: Transition,
-                }}
-                keepMounted
+            <Popover
+                id= 'simple-popover'
+                open={popoverOpen}
                 onClose={handleClose}
-                aria-describedby="alert-dialog-slide-description"
-                role="alertdialog"
+                anchorPosition={{ top: 200, left: 400 }}
+                anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+                }}
             >
-                <DialogTitle>{dialogContent.title}</DialogTitle>
-                <Divider/>
-                <DialogContent>
-                <DialogContentText id="alert-dialog-slide-description">
-                    {dialogContent.content}
-                </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                <Button onClick={handleClose} autoFocus>
-                    Got It!
-                </Button>
-                </DialogActions>
-            </Dialog>
+                {popoverContent.content}
+            </Popover>
         <footer className="site-footer">
           <p>&copy; 2026 Intelligent Business Analyzer</p>
           <p>Please note that this is purely based off of predictive modeling and general business rules. For a better tailored experience, please reach out to a local financial analyst or legal professional.</p>
