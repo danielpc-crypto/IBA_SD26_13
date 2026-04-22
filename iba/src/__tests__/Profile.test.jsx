@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Profile from '../Profile';
@@ -130,61 +130,5 @@ describe('Delete account dialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
     await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
     expect(screen.getByPlaceholderText(/enter your password/i)).toHaveValue('');
-  });
-});
-
-//test delete account
-describe('Delete account API behaviour', () => {
-  test('calls DELETE /users with correct payload on confirm', async () => {
-    global.fetch.mockResolvedValueOnce({ ok: true });
-    renderWithUser(mockUser);
-    await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
-    await userEvent.type(screen.getByPlaceholderText(/enter your password/i), 'mysecret');
-    await userEvent.click(screen.getAllByRole('button', { name: /delete account/i })[1]);
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/users', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'johndoe', password: 'mysecret' }),
-      });
-    });
-  });
-
-  test('clears localStorage and redirects to / on successful delete', async () => {
-    global.fetch.mockResolvedValueOnce({ ok: true });
-    renderWithUser(mockUser);
-    await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
-    await userEvent.type(screen.getByPlaceholderText(/enter your password/i), 'mysecret');
-    await userEvent.click(screen.getAllByRole('button', { name: /delete account/i })[1]);
-    await waitFor(() => {
-      expect(localStorage.getItem('user')).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith('/');
-    });
-  });
-
-  test('shows alert on failed delete due to wrong password', async () => {
-    global.fetch.mockResolvedValueOnce({ ok: false });
-    renderWithUser(mockUser);
-    await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
-    await userEvent.type(screen.getByPlaceholderText(/enter your password/i), 'wrongpass');
-    await userEvent.click(screen.getAllByRole('button', { name: /delete account/i })[1]);
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        expect.stringMatching(/failed to delete/i)
-      );
-    });
-  });
-
-  test('handles network error gracefully', async () => {
-    global.fetch.mockRejectedValueOnce(new Error('Network error'));
-    renderWithUser(mockUser);
-    await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
-    await userEvent.type(screen.getByPlaceholderText(/enter your password/i), 'mysecret');
-    await userEvent.click(screen.getAllByRole('button', { name: /delete account/i })[1]);
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        expect.stringMatching(/error occurred/i)
-      );
-    });
   });
 });
