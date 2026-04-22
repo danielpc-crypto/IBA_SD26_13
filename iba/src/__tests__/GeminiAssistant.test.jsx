@@ -9,15 +9,19 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('../Header', () => () => <div data-testid="header" />);
-jest.mock('react-markdown', () => ({ children }) => <span>{children}</span>);
+jest.mock('../Header', () => ({ open, setOpen }) => (
+  <div data-testid="header" />
+));
+jest.mock('react-markdown', () => ({ children, components }) => (
+  <span>{children}</span>
+));
 
 const mockUser = {
   id: 1,
   firstName: 'John',
   lastName: 'Doe',
   username: 'johndoe',
-  email: 'johndoe@fakemail.com',
+  email: 'johndoe@testmail.com',
   business_data_uploaded: false,
 };
 
@@ -27,6 +31,17 @@ const mockFlags = {
   non_pay: false,
   chargeback: false,
   variance_com_drop: false,
+};
+
+const mockStreamResponse = (text = 'Hello from Gemini') => {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(text));
+      controller.close();
+    },
+  });
+  global.fetch.mockResolvedValueOnce({ body: stream });
 };
 
 beforeEach(() => {
@@ -47,16 +62,11 @@ const renderWithUser = (user = mockUser) => {
   );
 };
 
-//test page rendering
+//test rednering
 describe('GeminiAssistant rendering', () => {
   test('renders the header component', () => {
     renderWithUser();
     expect(screen.getByTestId('header')).toBeInTheDocument();
-  });
-
-  test('renders the Gemini Chat heading', () => {
-    renderWithUser();
-    expect(screen.getByText('Gemini Chat')).toBeInTheDocument();
   });
 
   test('renders the message input field', () => {
@@ -74,18 +84,18 @@ describe('GeminiAssistant rendering', () => {
     expect(screen.getByPlaceholderText('Message...')).toHaveValue('');
   });
 
-  test('chat container is empty on initial render', () => {
-    renderWithUser();
-    expect(screen.queryByText(/gemini is typing/i)).not.toBeInTheDocument();
-  });
-
   test('loading indicator is not shown on initial render', () => {
     renderWithUser();
-    expect(screen.queryByText(/gemini is typing/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/assistant is typing/i)).not.toBeInTheDocument();
+  });
+
+  test('no messages are shown on initial render', () => {
+    renderWithUser();
+    expect(screen.queryByText('Hello from Gemini')).not.toBeInTheDocument();
   });
 });
 
-//test login redirect
+//test redirect user
 describe('GeminiAssistant auth redirect', () => {
   test('redirects to /login when no user in localStorage', () => {
     render(<MemoryRouter><GeminiAssistant /></MemoryRouter>);
@@ -98,7 +108,7 @@ describe('GeminiAssistant auth redirect', () => {
   });
 });
 
-//test input behavior
+//test inputs
 describe('GeminiAssistant input behaviour', () => {
   test('input updates as user types', async () => {
     renderWithUser();
@@ -115,44 +125,20 @@ describe('GeminiAssistant input behaviour', () => {
     expect(input).toHaveValue('');
   });
 
-  test('does not send message when input is empty', async () => {
+  test('does not call fetch when input is empty', async () => {
     renderWithUser();
     await userEvent.click(screen.getByRole('button'));
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  test('does not send message when input is only whitespace', async () => {
+  test('does not call fetch when input is only whitespace', async () => {
     renderWithUser();
     await userEvent.type(screen.getByPlaceholderText('Message...'), '   ');
     await userEvent.click(screen.getByRole('button'));
     expect(fetch).not.toHaveBeenCalled();
   });
-});
 
-//test message display
-describe('GeminiAssistant message display', () => {
-  const mockStreamResponse = (text = 'Hello from Gemini') => {
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode(text));
-        controller.close();
-      },
-    });
-    global.fetch.mockResolvedValueOnce({ body: stream });
-  };
-
-  test('displays user message after sending', async () => {
-    mockStreamResponse();
-    renderWithUser();
-    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
-    await userEvent.click(screen.getByRole('button'));
-    await waitFor(() => {
-      expect(screen.getByText('Hello')).toBeInTheDocument();
-    });
-  });
-
-  test('clears input field after sending a message', async () => {
+  test('input is cleared after sending a message', async () => {
     mockStreamResponse();
     renderWithUser();
     const input = screen.getByPlaceholderText('Message...');
@@ -163,7 +149,29 @@ describe('GeminiAssistant message display', () => {
     });
   });
 
-  test('displays model response after receiving stream', async () => {
+  test('pressing Enter sends the message', async () => {
+    mockStreamResponse();
+    renderWithUser();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello{enter}');
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalled();
+    });
+  });
+});
+
+//test message display
+describe('GeminiAssistant message display', () => {
+  test('displays user message in the chat after sending', async () => {
+    mockStreamResponse();
+    renderWithUser();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
+    await userEvent.click(screen.getByRole('button'));
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeInTheDocument();
+    });
+  });
+
+  test('displays model response after stream completes', async () => {
     mockStreamResponse('Hello from Gemini');
     renderWithUser();
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
@@ -173,17 +181,7 @@ describe('GeminiAssistant message display', () => {
     });
   });
 
-  test('sends message when Enter key is pressed', async () => {
-    mockStreamResponse();
-    renderWithUser();
-    const input = screen.getByPlaceholderText('Message...');
-    await userEvent.type(input, 'Hello{enter}');
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalled();
-    });
-  });
-
-  test('calls fetch with correct endpoint when message is sent', async () => {
+  test('calls fetch with correct endpoint on send', async () => {
     mockStreamResponse();
     renderWithUser();
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
@@ -193,6 +191,45 @@ describe('GeminiAssistant message display', () => {
         'http://localhost:5000/chat-stream',
         expect.objectContaining({ method: 'POST' })
       );
+    });
+  });
+
+  test('calls fetch with FormData body', async () => {
+    mockStreamResponse();
+    renderWithUser();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
+    await userEvent.click(screen.getByRole('button'));
+    await waitFor(() => {
+      const [, options] = fetch.mock.calls[0];
+      expect(options.body).toBeInstanceOf(FormData);
+    });
+  });
+
+  test('multiple messages accumulate in the chat', async () => {
+    mockStreamResponse('First response');
+    renderWithUser();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'First message');
+    await userEvent.click(screen.getByRole('button'));
+    await waitFor(() => {
+      expect(screen.getByText('First message')).toBeInTheDocument();
+    });
+
+    mockStreamResponse('Second response');
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Second message');
+    await userEvent.click(screen.getByRole('button'));
+    await waitFor(() => {
+      expect(screen.getByText('First message')).toBeInTheDocument();
+      expect(screen.getByText('Second message')).toBeInTheDocument();
+    });
+  });
+
+  test('loading indicator appears while waiting for response', async () => {
+    global.fetch.mockReturnValueOnce(new Promise(() => {}));
+    renderWithUser();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
+    await userEvent.click(screen.getByRole('button'));
+    await waitFor(() => {
+      expect(screen.getByText(/assistant is typing/i)).toBeInTheDocument();
     });
   });
 });

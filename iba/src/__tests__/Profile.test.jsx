@@ -1,19 +1,18 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Profile from '../Profile';
 
-//mock useNavigate
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }));
 
-//mock header component so profile is isolated
-jest.mock('../Header', () => () => <div data-testid="header" />);
+jest.mock('../Header', () => ({ open, setOpen }) => (
+  <div data-testid="header" />
+));
 
-//render Profile with a user in localStorage
 const renderWithUser = (user = null) => {
   if (user) {
     localStorage.setItem('user', JSON.stringify(user));
@@ -31,7 +30,7 @@ const mockUser = {
   firstName: 'John',
   lastName: 'Doe',
   username: 'johndoe',
-  email: 'johndoe@fakemail.com',
+  email: 'johndoe@testmail.com',
 };
 
 beforeEach(() => {
@@ -40,7 +39,7 @@ beforeEach(() => {
   global.fetch = jest.fn();
 });
 
-//render
+//test rendering
 describe('Profile rendering', () => {
   test('renders the page heading', () => {
     renderWithUser(mockUser);
@@ -62,10 +61,10 @@ describe('Profile rendering', () => {
     expect(screen.getByText('John')).toBeInTheDocument();
     expect(screen.getByText('Doe')).toBeInTheDocument();
     expect(screen.getByText('johndoe')).toBeInTheDocument();
-    expect(screen.getByText('johndoe@fakemail.com')).toBeInTheDocument();
+    expect(screen.getByText('johndoe@testmail.com')).toBeInTheDocument();
   });
 
-  test('shows fallback message when no user is in localStorage', () => {
+  test('shows fallback message when no user in localStorage', () => {
     renderWithUser(null);
     expect(screen.getByText(/no profile data available/i)).toBeInTheDocument();
   });
@@ -74,10 +73,14 @@ describe('Profile rendering', () => {
     renderWithUser(mockUser);
     expect(screen.getByRole('button', { name: /delete account/i })).toBeInTheDocument();
   });
+
+  test('renders the header component', () => {
+    renderWithUser(mockUser);
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+  });
 });
 
-// ─── Redirect ─────────────────────────────────────────────────────────────────
-
+//test redirect
 describe('Auth redirect', () => {
   test('redirects to /login when no user in localStorage', () => {
     renderWithUser(null);
@@ -90,7 +93,7 @@ describe('Auth redirect', () => {
   });
 });
 
-//delete account dialog test
+//test deletion dialog
 describe('Delete account dialog', () => {
   test('dialog is not visible on initial render', () => {
     renderWithUser(mockUser);
@@ -108,7 +111,7 @@ describe('Delete account dialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
     await waitFor(() => {
-        expect(screen.queryByText(/this action cannot be undone/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/this action cannot be undone/i)).not.toBeInTheDocument();
     });
   });
 
@@ -125,8 +128,6 @@ describe('Delete account dialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
     await userEvent.type(screen.getByPlaceholderText(/enter your password/i), 'mysecret');
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
-    
-    //reopen, confirm field is empty
     await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
     expect(screen.getByPlaceholderText(/enter your password/i)).toHaveValue('');
   });
