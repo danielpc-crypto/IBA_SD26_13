@@ -12,8 +12,9 @@ beforeEach(() => {
 describe('Start navbar', () => {
   test('renders the brand name', () => {
     render(<MemoryRouter><Start /></MemoryRouter>);
-    expect(screen.getByText('Intelligent Business Analyzer')).toBeInTheDocument();
-  });
+    expect(screen.getByRole('link', { name: /intelligent business analyzer/i }))
+        .toBeInTheDocument();
+    });
 
   test('brand name links to home', () => {
     render(<MemoryRouter><Start /></MemoryRouter>);
@@ -34,8 +35,8 @@ describe('Start navbar', () => {
 
   test('navbar get started link points to /signup', () => {
     render(<MemoryRouter><Start /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: /get started/i }))
-      .toHaveAttribute('href', '/signup');
+    const links = screen.getAllByRole('link', { name: /get started/i });
+    expect(links[0]).toHaveAttribute('href', '/signup');
   });
 });
 
