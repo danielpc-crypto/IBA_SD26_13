@@ -142,7 +142,7 @@ describe('GeminiAssistant input behaviour', () => {
     mockStreamResponse();
     renderWithUser();
     const input = screen.getByPlaceholderText('Message...');
-    await userEvent.type(input, 'Hello Gemini');
+    await userEvent.type(input, 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
       expect(input).toHaveValue('');
@@ -167,7 +167,7 @@ describe('GeminiAssistant message display', () => {
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
-      expect(screen.getByText('Hello Gemini')).toBeInTheDocument();
+      expect(screen.getByText('Hello')).toBeInTheDocument();
     });
   });
 
