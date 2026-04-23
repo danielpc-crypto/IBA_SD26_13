@@ -78,10 +78,11 @@ jobs:
         run: npm install
         working-directory: backend
 
-      - name: Start backend server
+       - name: Start backend server
         run: node server.js > /tmp/backend.log 2>&1 &
         working-directory: backend
         env:
+          NODE_PATH: ./node_modules
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASSWORD: testpassword
