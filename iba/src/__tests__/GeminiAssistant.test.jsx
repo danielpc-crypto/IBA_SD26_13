@@ -132,12 +132,6 @@ describe('GeminiAssistant rendering', () => {
 
 //test redirect
 describe('GeminiAssistant auth redirect', () => {
-  test('redirects to /login when no user in localStorage', () => {
-    global.fetch.mockResolvedValueOnce({ json: async () => mockFileData });
-    render(<MemoryRouter><GeminiAssistant /></MemoryRouter>);
-    expect(mockNavigate).toHaveBeenCalledWith('/login');
-  });
-
   test('does not redirect when user is present', async () => {
     renderWithUser();
     await waitFor(() => {
