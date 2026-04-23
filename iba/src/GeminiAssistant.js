@@ -24,6 +24,18 @@ import {
 import { Send } from '@mui/icons-material';
 import Header from './Header';
 
+const getUserDocuments = async (username, s3_file_key) => {
+    try {
+        const userFile = await fetch(`http://localhost:5000/retrieve/bucket/${username}/${s3_file_key}`,{
+            method: "GET",
+        }).then(res => res.json());
+        return userFile;
+    } catch (error) {
+        console.error("Error fetching user file:", error);
+        throw error;
+    }
+};
+
 function GeminiAssistant(){
     const navigate = useNavigate();
     const [logoutOpen, setLogoutOpen] = useState(false);
@@ -31,6 +43,7 @@ function GeminiAssistant(){
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [fileData, setFileData] = useState(null);
     const user = localStorage.getItem("user");
     const parsedUser = JSON.parse(user);
     const flags = JSON.parse(localStorage.getItem("flags")) || {
@@ -40,7 +53,7 @@ function GeminiAssistant(){
         chargeback: false,
         variance_com_drop: false
     };
-    const userFile = localStorage.getItem("file");
+
         
     useEffect(() => {
     if (!user) {
@@ -53,6 +66,26 @@ function GeminiAssistant(){
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        const fetchDocument = async () => {
+            try {
+                const userFile = await getUserDocuments(
+                    parsedUser.username,
+                    parsedUser.s3_file_key
+                );
+
+                setFileData(userFile);
+                console.log("Fetched user document:", userFile);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchDocument();
+    }, [parsedUser.username, parsedUser.s3_file_key]);
+    
 
     const sendMessage = async () => {
         if(!input.trim()) return;
@@ -69,8 +102,8 @@ function GeminiAssistant(){
 
         const gemInput = new FormData();
         gemInput.append("messages", JSON.stringify({messages: updated}))
-        gemInput.append("file", userFile);
-        gemInput.append("flags", flags);
+        gemInput.append("file", fileData.body);
+        gemInput.append("flags", JSON.stringify(flags));
         const res = await fetch("http://localhost:5000/chat-stream", {
             method: "POST",
             body: gemInput,
