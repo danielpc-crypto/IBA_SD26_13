@@ -70,12 +70,16 @@ jobs:
           );
           EOF
 
+      - name: Check backend folder contents
+        run: ls -la
+        working-directory: backend
+
       - name: Install backend dependencies
-        run: npm ci
+        run: npm install
         working-directory: backend
 
       - name: Start backend server
-        run: node server.js &
+        run: node server.js > /tmp/backend.log 2>&1 &
         working-directory: backend
         env:
           DB_HOST: 127.0.0.1
@@ -87,23 +91,37 @@ jobs:
           AWS_SECRET_ACCESS_KEY: placeholder
 
       - name: Wait for backend to be ready
-        run: npx wait-on http://localhost:5000/health --timeout 30000
-        working-directory: iba
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:5000/health && echo "Backend ready" && exit 0
+            echo "Waiting for backend... attempt $i"
+            sleep 2
+          done
+          echo "Backend failed to start. Logs:"
+          cat /tmp/backend.log
+          exit 1
 
       - name: Install frontend dependencies
         run: npm ci
         working-directory: iba
 
       - name: Start frontend
-        run: npm start &
+        run: npm start > /tmp/frontend.log 2>&1 &
         working-directory: iba
         env:
           BROWSER: none
           CI: false
 
       - name: Wait for frontend to be ready
-        run: npx wait-on http://localhost:3000 --timeout 60000
-        working-directory: iba
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:3000 && echo "Frontend ready" && exit 0
+            echo "Waiting for frontend... attempt $i"
+            sleep 3
+          done
+          echo "Frontend failed to start. Logs:"
+          cat /tmp/frontend.log
+          exit 1
 
       - name: Run Cypress tests
         run: npx cypress run
