@@ -78,7 +78,7 @@ jobs:
         run: npm install
         working-directory: backend
 
-       - name: Start backend server
+      - name: Start backend server
         run: node server.js > /tmp/backend.log 2>&1 &
         working-directory: backend
         env:
@@ -124,6 +124,13 @@ jobs:
           cat /tmp/frontend.log
           exit 1
 
+      - name: Print backend logs before Cypress
+        run: cat /tmp/backend.log
+
       - name: Run Cypress tests
         run: npx cypress run
         working-directory: iba
+
+      - name: Print backend logs after Cypress
+        if: always()
+        run: cat /tmp/backend.log
