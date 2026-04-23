@@ -14,10 +14,10 @@ const genAI = new GoogleGenerativeAI(key);
 const AWS = require("aws-sdk");
 
 const db = mysql.createConnection({
-    host:"iba-database.cpy6gmwayev0.us-east-2.rds.amazonaws.com",
-    user:"admin",
-    password:"GaffarIBA123",
-    database:"iba"
+    host: "iba-database.cpy6gmwayev0.us-east-2.rds.amazonaws.com",
+    user: "admin",
+    password: "GaffarIBA123",
+    database: "iba"
 });
 
 const s3 = new AWS.S3({
