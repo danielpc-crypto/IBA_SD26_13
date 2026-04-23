@@ -21,8 +21,9 @@ const mockUser = {
   firstName: 'John',
   lastName: 'Doe',
   username: 'johndoe',
-  email: 'johndoe@testmail.com',
+  email: 'john@testmail.com',
   business_data_uploaded: false,
+  s3_file_key: 'test-file-key',
 };
 
 const mockFlags = {
@@ -31,6 +32,10 @@ const mockFlags = {
   non_pay: false,
   chargeback: false,
   variance_com_drop: false,
+};
+
+const mockFileData = {
+  body: 'mock file content',
 };
 
 const mockStreamResponse = (text = 'Hello from Gemini') => {
@@ -44,6 +49,13 @@ const mockStreamResponse = (text = 'Hello from Gemini') => {
   global.fetch.mockResolvedValueOnce({ body: stream });
 };
 
+// Mock the S3 document fetch — called on component mount
+const mockDocumentFetch = () => {
+  global.fetch.mockResolvedValueOnce({
+    json: async () => mockFileData,
+  });
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   localStorage.clear();
@@ -55,6 +67,7 @@ const renderWithUser = (user = mockUser) => {
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('flags', JSON.stringify(mockFlags));
   }
+  mockDocumentFetch();
   return render(
     <MemoryRouter>
       <GeminiAssistant />
@@ -62,87 +75,118 @@ const renderWithUser = (user = mockUser) => {
   );
 };
 
-//test rednering
+//test rendering
 describe('GeminiAssistant rendering', () => {
-  test('renders the header component', () => {
+  test('renders the header component', async () => {
     renderWithUser();
-    expect(screen.getByTestId('header')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('header')).toBeInTheDocument();
+    });
   });
 
-  test('renders the message input field', () => {
+  test('renders the message input field', async () => {
     renderWithUser();
-    expect(screen.getByPlaceholderText('Message...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Message...')).toBeInTheDocument();
+    });
   });
 
-  test('renders the send button', () => {
+  test('renders the send button', async () => {
     renderWithUser();
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button')).toBeInTheDocument();
+    });
   });
 
-  test('message input is empty on initial render', () => {
+  test('message input is empty on initial render', async () => {
     renderWithUser();
-    expect(screen.getByPlaceholderText('Message...')).toHaveValue('');
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Message...')).toHaveValue('');
+    });
   });
 
-  test('loading indicator is not shown on initial render', () => {
+  test('loading indicator is not shown on initial render', async () => {
     renderWithUser();
-    expect(screen.queryByText(/assistant is typing/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/assistant is typing/i)).not.toBeInTheDocument();
+    });
   });
 
-  test('no messages are shown on initial render', () => {
+  test('no messages shown on initial render', async () => {
     renderWithUser();
-    expect(screen.queryByText('Hello from Gemini')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Hello from Gemini')).not.toBeInTheDocument();
+    });
+  });
+
+  test('fetches user document on mount', async () => {
+    renderWithUser();
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        `http://localhost:5000/retrieve/bucket/${mockUser.username}/${mockUser.s3_file_key}`,
+        expect.objectContaining({ method: 'GET' })
+      );
+    });
   });
 });
 
-//test redirect user
+//test redirect
 describe('GeminiAssistant auth redirect', () => {
   test('redirects to /login when no user in localStorage', () => {
+    global.fetch.mockResolvedValueOnce({ json: async () => mockFileData });
     render(<MemoryRouter><GeminiAssistant /></MemoryRouter>);
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
-  test('does not redirect when user is present', () => {
+  test('does not redirect when user is present', async () => {
     renderWithUser();
-    expect(mockNavigate).not.toHaveBeenCalledWith('/login');
+    await waitFor(() => {
+      expect(mockNavigate).not.toHaveBeenCalledWith('/login');
+    });
   });
 });
 
-//test inputs
+//test input behavior
 describe('GeminiAssistant input behaviour', () => {
   test('input updates as user types', async () => {
     renderWithUser();
-    const input = screen.getByPlaceholderText('Message...');
-    await userEvent.type(input, 'Hello');
-    expect(input).toHaveValue('Hello');
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello Gemini');
+    expect(screen.getByPlaceholderText('Message...')).toHaveValue('Hello Gemini');
   });
 
   test('input can be cleared', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
     const input = screen.getByPlaceholderText('Message...');
     await userEvent.type(input, 'Hello');
     await userEvent.clear(input);
     expect(input).toHaveValue('');
   });
 
-  test('does not call fetch when input is empty', async () => {
+  test('does not call chat endpoint when input is empty', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByRole('button'));
+    const callsBefore = global.fetch.mock.calls.length;
     await userEvent.click(screen.getByRole('button'));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(global.fetch.mock.calls.length).toBe(callsBefore);
   });
 
-  test('does not call fetch when input is only whitespace', async () => {
+  test('does not call chat endpoint when input is only whitespace', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    const callsBefore = global.fetch.mock.calls.length;
     await userEvent.type(screen.getByPlaceholderText('Message...'), '   ');
     await userEvent.click(screen.getByRole('button'));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(global.fetch.mock.calls.length).toBe(callsBefore);
   });
 
   test('input is cleared after sending a message', async () => {
-    mockStreamResponse();
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse();
     const input = screen.getByPlaceholderText('Message...');
-    await userEvent.type(input, 'Hello');
+    await userEvent.type(input, 'Hello Gemini');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
       expect(input).toHaveValue('');
@@ -150,30 +194,34 @@ describe('GeminiAssistant input behaviour', () => {
   });
 
   test('pressing Enter sends the message', async () => {
-    mockStreamResponse();
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse();
+    const callsBefore = global.fetch.mock.calls.length;
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello{enter}');
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalled();
+      expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore);
     });
   });
 });
 
 //test message display
 describe('GeminiAssistant message display', () => {
-  test('displays user message in the chat after sending', async () => {
-    mockStreamResponse();
+  test('displays user message in chat after sending', async () => {
     renderWithUser();
-    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse();
+    await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello Gemini');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
-      expect(screen.getByText('Hello')).toBeInTheDocument();
+      expect(screen.getByText('Hello Gemini')).toBeInTheDocument();
     });
   });
 
   test('displays model response after stream completes', async () => {
-    mockStreamResponse('Hello from Gemini');
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse('Hello from Gemini');
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
@@ -181,9 +229,10 @@ describe('GeminiAssistant message display', () => {
     });
   });
 
-  test('calls fetch with correct endpoint on send', async () => {
-    mockStreamResponse();
+  test('calls chat endpoint with correct URL on send', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse();
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
@@ -194,20 +243,26 @@ describe('GeminiAssistant message display', () => {
     });
   });
 
-  test('calls fetch with FormData body', async () => {
-    mockStreamResponse();
+  test('calls chat endpoint with FormData body', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    mockStreamResponse();
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
-      const [, options] = fetch.mock.calls[0];
-      expect(options.body).toBeInstanceOf(FormData);
+      const chatCall = fetch.mock.calls.find(
+        ([url]) => url === 'http://localhost:5000/chat-stream'
+      );
+      expect(chatCall).toBeDefined();
+      expect(chatCall[1].body).toBeInstanceOf(FormData);
     });
   });
 
-  test('multiple messages accumulate in the chat', async () => {
-    mockStreamResponse('First response');
+  test('multiple messages accumulate in chat', async () => {
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+
+    mockStreamResponse('First response');
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'First message');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
@@ -224,8 +279,9 @@ describe('GeminiAssistant message display', () => {
   });
 
   test('loading indicator appears while waiting for response', async () => {
-    global.fetch.mockReturnValueOnce(new Promise(() => {}));
     renderWithUser();
+    await waitFor(() => screen.getByPlaceholderText('Message...'));
+    global.fetch.mockReturnValueOnce(new Promise(() => {}));
     await userEvent.type(screen.getByPlaceholderText('Message...'), 'Hello');
     await userEvent.click(screen.getByRole('button'));
     await waitFor(() => {
