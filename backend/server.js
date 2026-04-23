@@ -70,7 +70,7 @@ app.post("/upload/bucket", upload.single("file"), async (req, res) => {
 
         const key = `${username}/${Date.now()}_${file.originalname}`;
         
-        bucket = "iba-13-bucket";
+        const bucket = "iba-13-bucket";
         const result = await s3.upload({
             Bucket: bucket,
             Key: key,
@@ -80,20 +80,62 @@ app.post("/upload/bucket", upload.single("file"), async (req, res) => {
         }).promise();
     
 
-        res.json({ file_url: result.Location });
+        res.json({ file_key: result.key });
     }catch(err){
         console.error("S3 upload error:", err);
         res.status(500).json({ message: 'Error uploading file' });
     }
-})
+});
+
+app.get("/retrieve/bucket/:username/:s3_fileName", async (req, res) => {
+    const { username, s3_fileName } = req.params;
+    const bucket = "iba-13-bucket";
+    
+    const result = await s3.getObject({
+        Bucket: bucket,
+        Key: `${username}/${s3_fileName}`
+    }).promise();
+    res.json({
+        key: s3_fileName,
+        contentType: result.ContentType,
+        body: result.Body.toString(),
+        size: result.ContentLength
+    });
+});
+
+app.get("/download/:username/:s3_fileName", async (req, res) => {
+    const bucket = "iba-13-bucket";
+    const { username, s3_fileName } = req.params;
+
+    try {
+        const file = await s3.getObject({
+            Bucket: bucket,
+            Key: `${username}/${s3_fileName}`
+        }).promise();
+
+        // Set headers so browser downloads it
+        res.setHeader("Content-Type", file.ContentType);
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${s3_fileName}"`
+        );
+
+        res.send(file.Body);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to download file" });
+    }
+});
+
 
 app.put('/data_uploaded/:id', (req, res) => {
     const { id } = req.params;
-    const { s3_url } = req.body;
+    const { s3_file_key } = req.body;
 
     db.query(
-        'UPDATE users SET business_data_uploaded = 1, s3_url = ? WHERE id = ?',
-        [s3_url, id],
+        'UPDATE users SET business_data_uploaded = 1, s3_file_key = ? WHERE id = ?',
+        [s3_file_key, id],
         (err, result) => {
             if (err) return res.status(500).json(err);
             res.json({ message: 'Data uploaded successfully' });
@@ -191,21 +233,26 @@ app.post('/chat-stream', upload.single("file"), async (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
   res.setHeader("Connection", "keep-alive");
+  console.log(req.body);
 
   try {
     const { messages } = JSON.parse(req.body.messages);
-    const file = req.file;
-    const { flags } = req.body.flags;
+    const fileData = req.body.file;
+    const flags = req.body.flags;
 
     const context = [];
-    if (file) context.push(file.buffer.toString());
-    if (flags) context.push(flags);
-    context.push("Use this file with the flags found from the business data when chatting with the user");
+    if (fileData) context.push(`Uploaded file contents: ${fileData}`);
+    if (flags) context.push(`Business Flags: ${JSON.stringify(flags)}`);
+    context.push(`You are analyzing supplier/business commission data.
+
+        Use the uploaded file data and business flags below when answering the user.
+
+        ${context.join("\n\n")}
+            `);
 
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        contents: context,
+        model: "gemini-3-flash-preview",
     });
 
     const chat = model.startChat({
@@ -217,10 +264,10 @@ app.post('/chat-stream', upload.single("file"), async (req, res) => {
 
     const lastMessage = messages[messages.length - 1].text;
 
-    const fullPrompt = `Context: ${context.join("\n")}
+    const fullPrompt = `${context}
         Use the provided file and flags when answering.
 
-        User:
+        User Question::
         ${lastMessage}
         `;
 

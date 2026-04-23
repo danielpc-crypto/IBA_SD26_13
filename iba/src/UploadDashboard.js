@@ -125,16 +125,14 @@ function UploadDashboard({ onUploadSuccess }) {
         method: "POST",
         body: formData,
       });
-      const urlData = await res.json();
-      console.log("File uploaded to S3 at URL:", urlData.file_url);
-      localStorage.setItem("s3_url", urlData.file_url);
+      const uploadData = await res.json();
       try{
         const res = await fetch(`http://localhost:5000/data_uploaded/${userInfo.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ s3_url: urlData.file_url }),
+          body: JSON.stringify({ s3_file_key: uploadData.file_key }),
         });
         const data = await res.json();
         console.log(data);
