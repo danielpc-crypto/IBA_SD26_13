@@ -19,6 +19,7 @@ import {
   IconButton,
   AppBar,
   CssBaseline,
+  Divider,
 } from '@mui/material';
 
 import Menu from '@mui/icons-material/Menu';
@@ -83,6 +84,7 @@ function Header({open, setOpen}){
                                     <Avatar src="pictures/default.png" alt="Profile" onClick={() => navigate("/profile")} sx={{ width: 60, height: 60, backgroundColor: "#212529"}} />
                                 </ListItemButton>
                             </ListItem>
+                            <Divider />
                             <ListItem>
                                 <ListItemButton>
                                     <ListItemText primary="Dashboard" onClick={() => navigate("/dashboard")} />
@@ -93,7 +95,19 @@ function Header({open, setOpen}){
                                     <ListItemText primary="IBA Assistant" onClick={() => navigate("/assistant")} />
                                 </ListItemButton>
                             </ListItem>
-
+                            <ListItem>
+                                <ListItemButton>
+                                    <ListItemText primary="Document Library" onClick={() => navigate("/view-document")} />
+                                </ListItemButton>
+                            </ListItem>
+                        </List>
+                        <List sx={{ marginTop: 'auto' }}>
+                            <Divider />
+                            <ListItem>
+                                <ListItemButton onClick={() => setLogoutOpen(true)}>
+                                    <ListItemText primary="Log Out" />
+                                </ListItemButton>
+                            </ListItem>
                         </List>
                     </Drawer>
             </div>
