@@ -135,7 +135,7 @@ jobs:
       - name: Start ML model server
         run: |
           touch /tmp/mlmodel.log
-          python app.py > /tmp/mlmodel.log 2>&1 &
+          python -m uvicorn modelapi:app --host 0.0.0.0 --port 8000 > /tmp/mlmodel.log 2>&1 &
           echo "ML model server start command issued"
         working-directory: mlmodel
 
