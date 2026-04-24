@@ -7,8 +7,43 @@ on:
     branches: ['**']
 
 jobs:
-  test:
+  jest:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: iba/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: iba
+
+      - name: Run Jest tests
+        run: npx jest --config=jest.config.js --watchAll=false --ci
+        working-directory: iba
+
+  cypress:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: iba_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -21,10 +56,81 @@ jobs:
           cache: 'npm'
           cache-dependency-path: iba/package-lock.json
 
-      - name: Install dependencies
+      - name: Create users table in test database
+        run: |
+          mysql -h 127.0.0.1 -u root -ptestpassword iba_test <<EOF
+          CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            firstName VARCHAR(100),
+            lastName VARCHAR(100),
+            username VARCHAR(100) UNIQUE,
+            email VARCHAR(100) UNIQUE,
+            password VARCHAR(255),
+            business_data_uploaded BOOLEAN DEFAULT FALSE
+          );
+          EOF
+
+      - name: Check backend folder contents
+        run: ls -la
+        working-directory: backend
+
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: backend
+
+      - name: Start backend server
+        run: node server.js > /tmp/backend.log 2>&1 &
+        working-directory: backend
+        env:
+          NODE_PATH: ./node_modules
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: testpassword
+          DB_NAME: iba_test
+          GEMINI_API_KEY: placeholder
+          AWS_ACCESS_KEY: placeholder
+          AWS_SECRET_ACCESS_KEY: placeholder
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:5000/health && echo "Backend ready" && exit 0
+            echo "Waiting for backend... attempt $i"
+            sleep 2
+          done
+          echo "Backend failed to start. Logs:"
+          cat /tmp/backend.log
+          exit 1
+
+      - name: Install frontend dependencies
         run: npm ci
         working-directory: iba
 
-      - name: Run tests
-        run: npx jest --config=jest.config.js --watchAll=false --ci
+      - name: Start frontend
+        run: npm start > /tmp/frontend.log 2>&1 &
         working-directory: iba
+        env:
+          BROWSER: none
+          CI: false
+
+      - name: Wait for frontend to be ready
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:3000 && echo "Frontend ready" && exit 0
+            echo "Waiting for frontend... attempt $i"
+            sleep 3
+          done
+          echo "Frontend failed to start. Logs:"
+          cat /tmp/frontend.log
+          exit 1
+
+      - name: Print backend logs before Cypress
+        run: cat /tmp/backend.log
+
+      - name: Run Cypress tests
+        run: npx cypress run
+        working-directory: iba
+
+      - name: Print backend logs after Cypress
+        if: always()
+        run: cat /tmp/backend.log
