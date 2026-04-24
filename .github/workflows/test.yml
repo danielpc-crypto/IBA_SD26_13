@@ -134,3 +134,7 @@ jobs:
       - name: Print backend logs after Cypress
         if: always()
         run: cat /tmp/backend.log
+        
+      - name: Print ML model logs after Cypress
+        if: always()
+        run: cat /tmp/mlmodel.log
