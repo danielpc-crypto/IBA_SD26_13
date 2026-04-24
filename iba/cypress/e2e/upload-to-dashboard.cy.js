@@ -1,10 +1,21 @@
 describe('File upload to dashboard flow', () => {
   const testUser = {
-    firstName: 'John',
-    lastName: 'Doe',
-    username: 'johndoe',
-    email: 'johndoe@testmail.com',
-    password: 'password',
+    firstName: 'Test',
+    lastName: 'User',
+    username: 'testuser',
+    email: 'testuser@testmail.com',
+    password: 'testpassword123',
+  };
+
+  const loginAndSetStorage = () => {
+    return cy.request('POST', 'http://localhost:5000/login', {
+      email: testUser.email,
+      password: testUser.password,
+    }).then((response) => {
+      cy.window().then((win) => {
+        win.localStorage.setItem('user', JSON.stringify(response.body.user));
+      });
+    });
   };
 
   before(() => {
@@ -28,17 +39,6 @@ describe('File upload to dashboard flow', () => {
     });
   });
 
-  beforeEach(() => {
-    cy.request('POST', 'http://localhost:5000/login', {
-      email: testUser.email,
-      password: testUser.password,
-    }).then((response) => {
-      cy.window().then((win) => {
-        win.localStorage.setItem('user', JSON.stringify(response.body.user));
-      });
-    });
-  });
-
   after(() => {
     cy.request({
       method: 'DELETE',
@@ -48,8 +48,10 @@ describe('File upload to dashboard flow', () => {
     });
   });
 
-  //page rendering upload
+  // ─── Upload page rendering ──────────────────────────────────────────────────
+
   it('renders the upload dashboard page correctly', () => {
+    loginAndSetStorage();
     cy.visit('/dashboard');
     cy.contains('Business Anomaly Detection').should('be.visible');
     cy.contains('Upload Business Data').should('be.visible');
@@ -57,11 +59,13 @@ describe('File upload to dashboard flow', () => {
   });
 
   it('analyze button is disabled before a file is selected', () => {
+    loginAndSetStorage();
     cy.visit('/dashboard');
     cy.contains('Analyze Data').should('be.disabled');
   });
 
   it('shows the file name chip after selecting a file', () => {
+    loginAndSetStorage();
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
       'cypress/fixtures/test_data.csv',
@@ -71,6 +75,7 @@ describe('File upload to dashboard flow', () => {
   });
 
   it('analyze button becomes enabled after selecting a file', () => {
+    loginAndSetStorage();
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
       'cypress/fixtures/test_data.csv',
@@ -79,76 +84,52 @@ describe('File upload to dashboard flow', () => {
     cy.contains('Analyze Data').should('not.be.disabled');
   });
 
-  //ml model response
-  it('successfully uploads file and navigates to full dashboard', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
+  // ─── Upload and full dashboard results ─────────────────────────────────────
+  // These tests share a single upload via beforeEach to avoid repeating
+  // the upload flow and to ensure the full dashboard is visible for assertions
 
-    cy.contains('Welcome back', { timeout: 30000 }).should('be.visible');
-  });
+  describe('After successful upload', () => {
+    beforeEach(() => {
+      loginAndSetStorage();
+      cy.visit('/dashboard');
+      cy.get('input[type="file"]').selectFile(
+        'cypress/fixtures/test_data.csv',
+        { force: true }
+      );
+      cy.contains('Analyze Data').click();
+      // Wait for navigation to full dashboard
+      cy.contains('Welcome back', { timeout: 30000 }).should('be.visible');
+    });
 
-  it('displays the fairness score of 100% after upload', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
+    it('successfully uploads file and navigates to full dashboard', () => {
+      cy.url().should('include', '/dashboard');
+      cy.contains('Welcome back').should('be.visible');
+    });
 
-    cy.contains('Fairness Score', { timeout: 30000 }).should('be.visible');
-    cy.contains('100%').should('be.visible');
-  });
+    it('displays the fairness score of 100% after upload', () => {
+      cy.contains('Fairness Score').should('be.visible');
+      cy.contains('100%').should('be.visible');
+    });
 
-  it('displays risk flags section after upload', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
+    it('displays risk flags section after upload', () => {
+      cy.contains('Risk Flags').should('be.visible');
+      cy.contains('Non-Pay').should('be.visible');
+      cy.contains('Chargeback').should('be.visible');
+      cy.contains('Variance Drop').should('be.visible');
+    });
 
-    cy.contains('Risk Flags', { timeout: 30000 }).should('be.visible');
-    cy.contains('Non-Pay').should('be.visible');
-    cy.contains('Chargeback').should('be.visible');
-    cy.contains('Variance Drop').should('be.visible');
-  });
+    it('displays payments trend chart after upload', () => {
+      cy.contains('Payments Trend').should('be.visible');
+    });
 
-  it('displays payments trend chart after upload', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
+    it('displays AI support section after upload', () => {
+      cy.contains('Chat with Assistant').should('be.visible');
+      cy.contains('Open Chat').should('be.visible');
+    });
 
-    cy.contains('Payments Trend', { timeout: 30000 }).should('be.visible');
-  });
-
-  it('displays AI support section after upload', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
-
-    cy.contains('Chat with Assistant', { timeout: 30000 }).should('be.visible');
-    cy.contains('Open Chat').should('be.visible');
-  });
-
-  it('Open Chat button navigates to assistant page', () => {
-    cy.visit('/dashboard');
-    cy.get('input[type="file"]').selectFile(
-      'cypress/fixtures/test_data.csv',
-      { force: true }
-    );
-    cy.contains('Analyze Data').click();
-
-    cy.contains('Open Chat', { timeout: 30000 }).click();
-    cy.url().should('include', '/assistant');
+    it('Open Chat button navigates to assistant page', () => {
+      cy.contains('Open Chat').click();
+      cy.url().should('include', '/assistant');
+    });
   });
 });
