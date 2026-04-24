@@ -64,7 +64,7 @@ describe('File upload to dashboard flow', () => {
   it('shows the file name chip after selecting a file', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('test_data.csv').should('be.visible');
@@ -73,7 +73,7 @@ describe('File upload to dashboard flow', () => {
   it('analyze button becomes enabled after selecting a file', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').should('not.be.disabled');
@@ -83,7 +83,7 @@ describe('File upload to dashboard flow', () => {
   it('successfully uploads file and navigates to full dashboard', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();
@@ -94,7 +94,7 @@ describe('File upload to dashboard flow', () => {
   it('displays the fairness score of 100% after upload', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();
@@ -106,7 +106,7 @@ describe('File upload to dashboard flow', () => {
   it('displays risk flags section after upload', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();
@@ -120,7 +120,7 @@ describe('File upload to dashboard flow', () => {
   it('displays payments trend chart after upload', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();
@@ -131,7 +131,7 @@ describe('File upload to dashboard flow', () => {
   it('displays AI support section after upload', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();
@@ -143,7 +143,7 @@ describe('File upload to dashboard flow', () => {
   it('Open Chat button navigates to assistant page', () => {
     cy.visit('/dashboard');
     cy.get('input[type="file"]').selectFile(
-      '../../mlmodel/sampleData/test_data.csv',
+      '../../../mlmodel/sampleData/test_data.csv',
       { force: true }
     );
     cy.contains('Analyze Data').click();

@@ -136,19 +136,26 @@ jobs:
         run: cat /tmp/backend.log
       
       - name: Check ML model folder contents
-        run: ls -la
+        run: |
+          ls -la
+          echo "Python version:"
+          python --version
+          echo "Checking for app.py:"
+          test -f app.py && echo "app.py exists" || echo "app.py NOT FOUND"
+          echo "Checking for requirements.txt:"
+          test -f requirements.txt && echo "requirements.txt exists" || echo "requirements.txt NOT FOUND"
         working-directory: mlmodel
-
-      - name: Set up Python for ML model
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
 
       - name: Install ML model dependencies
         run: |
           pip install -r requirements.txt
           echo "Dependencies installed successfully"
         working-directory: mlmodel
+
+      - name: Set up Python for ML model
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
       - name: Start ML model server
         run: |
@@ -171,7 +178,7 @@ jobs:
       - name: Print ML model logs after Cypress
         if: always()
         run: cat /tmp/mlmodel.log
-        
+
       - name: Print ML model logs after Cypress
         if: always()
         run: cat /tmp/mlmodel.log
