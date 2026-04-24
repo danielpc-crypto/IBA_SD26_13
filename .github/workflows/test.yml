@@ -56,6 +56,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: iba/package-lock.json
 
+      - name: Set up Python for ML model
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Create users table in test database
         run: |
           mysql -h 127.0.0.1 -u root -ptestpassword iba_test <<EOF
@@ -70,6 +75,12 @@ jobs:
           );
           EOF
 
+      - name: Clean up test users before Cypress run
+        run: |
+          mysql -h 127.0.0.1 -u root -ptestpassword iba_test -e \
+          "DELETE FROM users WHERE username='testuser' OR username='johndoe';"
+
+
       - name: Check backend folder contents
         run: ls -la
         working-directory: backend
@@ -79,7 +90,9 @@ jobs:
         working-directory: backend
 
       - name: Start backend server
-        run: node server.js > /tmp/backend.log 2>&1 &
+        run: |
+          touch /tmp/backend.log
+          node server.js > /tmp/backend.log 2>&1 &
         working-directory: backend
         env:
           NODE_PATH: ./node_modules
@@ -102,9 +115,51 @@ jobs:
           cat /tmp/backend.log
           exit 1
 
+      - name: Check ML model folder contents
+        run: |
+          ls -la
+          echo "Python version:"
+          python --version
+          echo "Checking for app.py:"
+          test -f app.py && echo "app.py exists" || echo "app.py NOT FOUND"
+          echo "Checking for requirements.txt:"
+          test -f requirements.txt && echo "requirements.txt exists" || echo "requirements.txt NOT FOUND"
+        working-directory: mlmodel
+
+      - name: Install ML model dependencies
+        run: |
+          pip install fastapi uvicorn pandas scikit-learn numpy python-multipart tensorflow keras
+          echo "Dependencies installed successfully"
+        working-directory: mlmodel
+
+      - name: Start ML model server
+        run: |
+          touch /tmp/mlmodel.log
+          python -m uvicorn modelapi:app --host 0.0.0.0 --port 8000 > /tmp/mlmodel.log 2>&1 &
+          echo "ML model server start command issued"
+        working-directory: mlmodel
+
+      - name: Wait for ML model to be ready
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:8000/health && echo "ML model ready" && exit 0
+            echo "Waiting for ML model... attempt $i"
+            sleep 3
+          done
+          echo "ML model failed to start. Logs:"
+          cat /tmp/mlmodel.log
+          exit 1
+
       - name: Install frontend dependencies
         run: npm ci
         working-directory: iba
+
+      - name: Copy test data to Cypress fixtures
+        run: |
+          mkdir -p iba/cypress/fixtures
+          cp mlmodel/sampleData/test_data.csv iba/cypress/fixtures/test_data.csv
+          echo "Fixture copy result: $?"
+          ls -la iba/cypress/fixtures/
 
       - name: Start frontend
         run: npm start > /tmp/frontend.log 2>&1 &
@@ -134,3 +189,11 @@ jobs:
       - name: Print backend logs after Cypress
         if: always()
         run: cat /tmp/backend.log
+
+      - name: Print ML model logs after Cypress
+        if: always()
+        run: cat /tmp/mlmodel.log
+
+      - name: Print frontend logs after Cypress
+        if: always()
+        run: cat /tmp/frontend.log
