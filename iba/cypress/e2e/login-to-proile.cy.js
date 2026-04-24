@@ -8,14 +8,28 @@ describe('Login to Profile flow', () => {
   };
 
   before(() => {
-    cy.request('POST', 'http://localhost:5000/signup', {
-      firstName: testUser.firstName,
-      lastName: testUser.lastName,
+  cy.request({
+    method: 'DELETE',
+    url: 'http://localhost:5000/users',
+    body: {
       username: testUser.username,
-      email: testUser.email,
       password: testUser.password,
+    },
+    failOnStatusCode: false,
+  }).then(() => {
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:5000/signup',
+      body: {
+        firstName: testUser.firstName,
+        lastName: testUser.lastName,
+        username: testUser.username,
+        email: testUser.email,
+        password: testUser.password,
+      },
     });
   });
+});
 
   it('successfully logs in and lands on dashboard', () => {
     cy.visit('/login');
@@ -61,9 +75,14 @@ describe('Login to Profile flow', () => {
   });
 
   after(() => {
-    cy.request('DELETE', 'http://localhost:5000/users', {
+  cy.request({
+    method: 'DELETE',
+    url: 'http://localhost:5000/users',
+    body: {
       username: testUser.username,
       password: testUser.password,
-    });
+    },
+    failOnStatusCode: false,
   });
+});
 });
