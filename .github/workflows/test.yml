@@ -59,7 +59,7 @@ jobs:
       - name: Set up Python for ML model
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Create users table in test database
         run: |
@@ -128,7 +128,7 @@ jobs:
 
       - name: Install ML model dependencies
         run: |
-          pip install -r requirements.txt
+          pip install fastapi uvicorn pandas scikit-learn numpy python-multipart tensorflow keras
           echo "Dependencies installed successfully"
         working-directory: mlmodel
 
