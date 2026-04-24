@@ -28,6 +28,11 @@ jobs:
         run: npx jest --config=jest.config.js --watchAll=false --ci
         working-directory: iba
 
+      - name: Copy test data to Cypress fixtures
+        run: |
+          mkdir -p iba/cypress/fixtures
+          cp mlmodel/sampleData/test_data.csv iba/cypress/fixtures/test_data.csv
+
   cypress:
     runs-on: ubuntu-latest
 
