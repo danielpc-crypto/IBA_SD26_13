@@ -131,6 +131,15 @@ describe('File upload to dashboard flow', () => {
       cy.contains('Welcome back').should('be.visible');
     });
 
+    it('displays the fairness score of 100% after upload', () => {
+        cy.contains('Fairness Score').should('be.visible');
+        cy.get('h6').then(($els) => {
+        const texts = [...$els].map(el => el.innerText);
+        cy.log('h6 texts found: ' + JSON.stringify(texts));
+        });
+        cy.contains('100%').should('be.visible');
+    });
+
     it('displays risk flags section after upload', () => {
       cy.contains('Risk Flags').should('be.visible');
       cy.contains('Non-Pay').should('be.visible');
