@@ -85,19 +85,44 @@ describe('File upload to dashboard flow', () => {
   });
 
   // ─── Upload and full dashboard results ─────────────────────────────────────
-  // These tests share a single upload via beforeEach to avoid repeating
-  // the upload flow and to ensure the full dashboard is visible for assertions
 
   describe('After successful upload', () => {
     beforeEach(() => {
-      loginAndSetStorage();
+      // Delete and recreate user to reset business_data_uploaded flag
+      cy.request({
+        method: 'DELETE',
+        url: 'http://localhost:5000/users',
+        body: { username: testUser.username, password: testUser.password },
+        failOnStatusCode: false,
+      }).then(() => {
+        cy.request({
+          method: 'POST',
+          url: 'http://localhost:5000/signup',
+          body: {
+            firstName: testUser.firstName,
+            lastName: testUser.lastName,
+            username: testUser.username,
+            email: testUser.email,
+            password: testUser.password,
+          },
+        }).then(() => {
+          cy.request('POST', 'http://localhost:5000/login', {
+            email: testUser.email,
+            password: testUser.password,
+          }).then((response) => {
+            cy.window().then((win) => {
+              win.localStorage.setItem('user', JSON.stringify(response.body.user));
+            });
+          });
+        });
+      });
+
       cy.visit('/dashboard');
-      cy.get('input[type="file"]').selectFile(
+      cy.get('input[type="file"]', { timeout: 10000 }).selectFile(
         'cypress/fixtures/test_data.csv',
         { force: true }
       );
       cy.contains('Analyze Data').click();
-      // Wait for navigation to full dashboard
       cy.contains('Welcome back', { timeout: 30000 }).should('be.visible');
     });
 
