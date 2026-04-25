@@ -154,6 +154,55 @@ function GeminiAssistant(){
                     scrollBehavior: "smooth",
                     }}
                 >
+                    <Box
+                        sx={{
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        }}
+                    >
+                        <Box
+                        sx={{
+                            maxWidth: "75%",
+                            py: 1.2,
+                            px: 2,
+                            borderRadius: 2.5,
+                            bgcolor: "#f5f5f5",
+                            color: "#111",
+                            whiteSpace: "pre-wrap",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
+                            whiteSpace: "normal",
+                            "& p": {
+                                margin: 0,
+                                marginBottom: "0.6em",
+                            },
+
+                            "& p:last-child": {
+                                marginBottom: 0,
+                            },
+
+                            "& pre": {
+                                margin: "8px 0",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                overflowX: "auto",
+                                backgroundColor: "#eee",
+                            },
+
+                            "& code": {
+                                fontFamily: "monospace",
+                                fontSize: "0.9em",
+                            },
+    
+                        }}
+                        >
+                        <ReactMarkdown
+                        components={{
+                            p: ({ children }) => <p style={{ margin: 0 }}>{children}</p>,
+                        }}>
+                            {"Hi! I am your IBA Assistant! I am here to help you with any questions you may have. I already have access to your commission document and your business analytics. How can I assist you today?"}</ReactMarkdown>
+                        </Box>
+                    </Box>
                     {messages.map((msg, i) => (
                     <Box
                         key={i}
