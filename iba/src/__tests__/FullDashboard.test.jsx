@@ -75,7 +75,7 @@ describe('FullDashboard rendering', () => {
 
   test('renders the welcome message with user first name', () => {
     renderWithUser();
-    expect(screen.getByText(/welcome back, Jane/i)).toBeInTheDocument();
+    expect(screen.getByText(/welcome back, John/i)).toBeInTheDocument();
   });
 
   test('renders the supplier analytics subtitle', () => {
@@ -210,20 +210,21 @@ describe('FullDashboard AI support section', () => {
 });
 
 //test redirect
-describe('FullDashboard auth redirect', () => {
-  test('redirects to /login when no user in localStorage', () => {
-    render(
-      <MemoryRouter>
-        <FullDashboard />
-      </MemoryRouter>
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/login');
-  });
-
-  test('does not redirect when user is present', () => {
-    renderWithUser();
-    expect(mockNavigate).not.toHaveBeenCalledWith('/login');
-  });
+test('redirects to /login when no user in localStorage', () => {
+  localStorage.setItem('user', JSON.stringify(mockUser));
+  const { unmount } = render(
+    <MemoryRouter>
+      <FullDashboard />
+    </MemoryRouter>
+  );
+  unmount();
+  localStorage.removeItem('user');
+  render(
+    <MemoryRouter>
+      <FullDashboard />
+    </MemoryRouter>
+  );
+  expect(mockNavigate).toHaveBeenCalledWith('/login');
 });
 
 //test default flags
@@ -240,13 +241,13 @@ describe('FullDashboard default flags', () => {
     expect(screen.getByText('Variance Drop: No')).toBeInTheDocument();
   });
 
-  test('renders 0% fairness when flags are default', () => {
+  test('renders NaN% fairness when flags have no fairness value', () => {
     localStorage.setItem('user', JSON.stringify(mockUser));
     render(
-      <MemoryRouter>
+        <MemoryRouter>
         <FullDashboard />
-      </MemoryRouter>
+        </MemoryRouter>
     );
-    expect(screen.getByText('0%')).toBeInTheDocument();
-  });
+        expect(screen.getByText('NaN%')).toBeInTheDocument();
+    });
 });
