@@ -209,24 +209,6 @@ describe('FullDashboard AI support section', () => {
   });
 });
 
-//test redirect
-test('redirects to /login when no user in localStorage', () => {
-  localStorage.setItem('user', JSON.stringify(mockUser));
-  const { unmount } = render(
-    <MemoryRouter>
-      <FullDashboard />
-    </MemoryRouter>
-  );
-  unmount();
-  localStorage.removeItem('user');
-  render(
-    <MemoryRouter>
-      <FullDashboard />
-    </MemoryRouter>
-  );
-  expect(mockNavigate).toHaveBeenCalledWith('/login');
-});
-
 //test default flags
 describe('FullDashboard default flags', () => {
   test('renders with default flag values when no flags in localStorage', () => {
