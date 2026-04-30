@@ -8,3 +8,5 @@ global.alert = jest.fn();
 global.ReadableStream = ReadableStream;
 
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+jest.mock('react-markdown', () => ({ children }) => children);
